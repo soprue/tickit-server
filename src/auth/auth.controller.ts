@@ -12,6 +12,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 interface GoogleRequest extends Request {
   user: {
@@ -23,18 +24,27 @@ interface GoogleRequest extends Request {
   };
 }
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
+  @ApiOperation({
+    summary: '구글 로그인',
+    description: '구글 OAuth2 로그인 창으로 리다이렉트합니다.',
+  })
   googleAuth() {
     // 구글 로그인 창으로 리다이렉트 (Passport가 처리)
   }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
+  @ApiOperation({
+    summary: '구글 로그인 콜백',
+    description: '구글 로그인 성공 후 리다이렉트되는 엔드포인트입니다.',
+  })
   async googleAuthRedirect(@Req() req: GoogleRequest) {
     const user = await this.authService.validateOAuthUser({
       email: req.user.email,
@@ -58,6 +68,9 @@ export class AuthController {
   }
 
   @Post('register')
+  @ApiOperation({ summary: '회원가입' })
+  @ApiResponse({ status: 201, description: '회원가입 성공' })
+  @ApiResponse({ status: 409, description: '이미 존재하는 이메일' })
   async register(@Body() registerDto: RegisterDto) {
     const user = await this.authService.register(
       registerDto.email,
@@ -75,6 +88,9 @@ export class AuthController {
   }
 
   @Post('login')
+  @ApiOperation({ summary: '로그인' })
+  @ApiResponse({ status: 200, description: '로그인 성공' })
+  @ApiResponse({ status: 401, description: '인증 실패' })
   async login(@Body() loginDto: LoginDto) {
     const user = await this.authService.validateUser(
       loginDto.email,

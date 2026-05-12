@@ -12,11 +12,12 @@
 - [x] Prisma Service 및 Module 생성 (Global Module 권장)
 
 ## 🔐 Step 2: 인증 시스템 구현 (Auth)
-- [ ] Passport.js 및 JWT 관련 패키지 설치
-- [ ] `AuthModule`, `AuthService` 생성
-- [ ] `User` 회원가입 및 로그인 로직 구현 (bcrypt 암호화 포함)
-- [ ] JWT 발급 및 검증 Strategy 구현
-- [ ] API 보호를 위한 `JwtAuthGuard` 작성
+- [x] Passport.js 및 JWT 관련 패키지 설치
+- [x] `AuthModule`, `AuthService` 생성
+- [x] `User` 회원가입 및 로그인 로직 구현 (bcrypt 암호화 포함)
+- [x] JWT 발급 및 검증 Strategy 구현
+- [x] API 보호를 위한 `JwtAuthGuard` 작성
+- [x] Swagger API 문서화 및 CORS 설정 추가
 
 ## 📋 Step 3: 리마인더 CRUD API 개발
 - [ ] `RemindersModule` 리소스 생성 (Controller, Service, DTO)

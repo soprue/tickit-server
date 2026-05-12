@@ -13,6 +13,9 @@ export interface Response<T> {
   data: T;
 }
 
+/**
+ * 성공적인 응답을 일관된 형식({ success: true, data: ... })으로 래핑하는 인터셉터입니다.
+ */
 @Injectable()
 export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
   intercept(

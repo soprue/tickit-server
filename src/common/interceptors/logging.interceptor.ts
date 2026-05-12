@@ -8,6 +8,10 @@ import {
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
+/**
+ * 모든 HTTP 요청에 대한 로깅을 수행하는 인터셉터입니다.
+ * 메서드, URL, 상태 코드 및 응답 시간을 로그로 출력합니다.
+ */
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger('HTTP');

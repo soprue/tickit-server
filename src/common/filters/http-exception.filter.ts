@@ -8,6 +8,10 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
+/**
+ * 전역 애플리케이션 예외를 처리하는 필터입니다.
+ * 모든 예외를 캡처하여 일관된 에러 응답 형식을 반환하고 로그를 남깁니다.
+ */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);

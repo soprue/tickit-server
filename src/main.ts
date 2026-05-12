@@ -1,4 +1,5 @@
 import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
+import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -28,8 +29,9 @@ async function bootstrap() {
     }),
   );
 
-  // Serialization
+  // Serialization & Response Mapping
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   // Logging
   app.useGlobalInterceptors(new LoggingInterceptor());

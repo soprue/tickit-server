@@ -59,12 +59,9 @@ export class AuthController {
     });
 
     return {
-      success: true,
       message: '구글 로그인에 성공했습니다.',
-      data: {
-        access_token,
-        user: new UserEntity(user),
-      },
+      access_token,
+      user: new UserEntity(user),
     };
   }
 
@@ -79,9 +76,8 @@ export class AuthController {
     );
 
     return {
-      success: true,
       message: '회원가입이 완료되었습니다.',
-      data: new UserEntity(user),
+      user: new UserEntity(user),
     };
   }
 
@@ -107,12 +103,9 @@ export class AuthController {
     });
 
     return {
-      success: true,
       message: '로그인에 성공했습니다.',
-      data: {
-        access_token,
-        user: new UserEntity(user),
-      },
+      access_token,
+      user: new UserEntity(user),
     };
   }
 }

@@ -5,11 +5,11 @@
 ---
 
 ## 🧱 Step 1: 데이터베이스 인프라 및 Prisma 설정
-- [ ] Prisma 및 관련 의존성 패키지 설치 (`@prisma/client`, `prisma`)
-- [ ] `npx prisma init`으로 초기 환경 구성
-- [ ] `User` 및 `Reminder` 기본 모델 설계 (`schema.prisma`)
-- [ ] PostgreSQL DB 연결 환경 변수 설정 (`.env`)
-- [ ] Prisma Service 및 Module 생성 (Global Module 권장)
+- [x] Prisma 및 관련 의존성 패키지 설치 (`@prisma/client`, `prisma`)
+- [x] `npx prisma init`으로 초기 환경 구성
+- [x] `User` 및 `Reminder` 기본 모델 설계 (`schema.prisma`)
+- [x] PostgreSQL DB 연결 환경 변수 설정 (`.env`)
+- [x] Prisma Service 및 Module 생성 (Global Module 권장)
 
 ## 🔐 Step 2: 인증 시스템 구현 (Auth)
 - [ ] Passport.js 및 JWT 관련 패키지 설치

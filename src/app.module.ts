@@ -21,6 +21,7 @@ import { UsersModule } from './users/users.module';
         GOOGLE_CALLBACK_URL: Joi.string().default(
           'http://localhost:3000/api/auth/google/callback',
         ),
+        ALLOWED_ORIGINS: Joi.string().default('http://localhost:5173'),
         PORT: Joi.number().default(3000),
       }),
     }),

@@ -1,14 +1,15 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
+import { PasswordService } from './password.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private passwordService: PasswordService,
   ) {}
 
   async register(
@@ -24,8 +25,7 @@ export class AuthService {
 
     let hashedPassword: string | null = null;
     if (password) {
-      const salt = await bcrypt.genSalt();
-      hashedPassword = await bcrypt.hash(password, salt);
+      hashedPassword = await this.passwordService.hashPassword(password);
     }
 
     return await this.usersService.create({
@@ -41,7 +41,11 @@ export class AuthService {
     pass: string,
   ): Promise<Partial<User> | null> {
     const user = await this.usersService.findOneByEmail(email);
-    if (user && user.password && (await bcrypt.compare(pass, user.password))) {
+    if (
+      user &&
+      user.password &&
+      (await this.passwordService.comparePassword(pass, user.password))
+    ) {
       const result: Partial<User> = { ...user };
       delete result.password;
       return result;

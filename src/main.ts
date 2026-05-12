@@ -1,3 +1,4 @@
+import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -25,6 +26,9 @@ async function bootstrap() {
 
   // Serialization
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
+  // Logging
+  app.useGlobalInterceptors(new LoggingInterceptor());
 
   // Swagger Configuration
   const config = new DocumentBuilder()

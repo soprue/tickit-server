@@ -28,7 +28,7 @@ export class AuthService {
       hashedPassword = await this.passwordService.hashPassword(password);
     }
 
-    return await this.usersService.create({
+    return await this.usersService.createWithDefaultSections({
       email,
       password: hashedPassword,
       socialId,
@@ -65,21 +65,10 @@ export class AuthService {
     socialId: string;
     provider: string;
   }) {
-    let user = await this.usersService.findOneByEmail(profile.email);
-
-    if (!user) {
-      // 유저가 없으면 새로 생성 (구글 가입)
-      user = await this.usersService.create({
-        email: profile.email,
-        socialId: profile.socialId,
-        provider: profile.provider,
-      });
-    } else if (user.provider !== profile.provider) {
-      // 이메일은 같은데 가입 경로가 다른 경우 (예: 일반 가입 후 구글 로그인 시도)
-      // 보안 정책에 따라 에러를 내거나, 계정을 연동할 수 있음. 여기서는 연동 처리.
-      // 나중에 필요에 따라 업데이트 로직 추가 가능
-    }
-
-    return user;
+    return await this.usersService.upsertByEmail({
+      email: profile.email,
+      socialId: profile.socialId,
+      provider: profile.provider,
+    });
   }
 }

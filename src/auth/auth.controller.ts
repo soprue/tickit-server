@@ -12,8 +12,15 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { UserEntity } from '../users/entities/user.entity';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GetUser } from './decorators/get-user.decorator';
 
 interface GoogleRequest extends Request {
   user: {
@@ -29,6 +36,45 @@ interface GoogleRequest extends Request {
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '로그아웃',
+    description: '서버의 리프레시 토큰을 무효화하여 로그아웃 처리합니다.',
+  })
+  @ApiResponse({ status: 200, description: '로그아웃 성공' })
+  async logout(@GetUser('userId') userId: number) {
+    await this.authService.logout(userId);
+    return { message: '로그아웃 되었습니다.' };
+  }
+
+  @Post('refresh')
+  @ApiOperation({
+    summary: '액세스 토큰 갱신',
+    description:
+      '리프레시 토큰을 사용하여 새로운 액세스 토큰과 리프레시 토큰을 발급받습니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '토큰 갱신 성공',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          access_token: '...',
+          refresh_token: '...',
+        },
+      },
+    },
+  })
+  async refresh(
+    @Body('refresh_token') refreshToken: string,
+    @Body('userId') userId: number,
+  ) {
+    return await this.authService.refreshTokens(userId, refreshToken);
+  }
 
   @Get('google')
   @UseGuards(AuthGuard('google'))

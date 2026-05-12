@@ -48,6 +48,29 @@ export class UsersService {
   }
 
   /**
+   * ID를 통해 사용자를 검색합니다.
+   * @param id 사용자 ID
+   * @returns 사용자 객체 또는 null
+   */
+  async findOneById(id: number): Promise<User | null> {
+    return await this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  /**
+   * 사용자의 리프레시 토큰을 업데이트합니다.
+   * @param id 사용자 ID
+   * @param refreshToken 새로운 리프레시 토큰 (로그아웃 시 null)
+   */
+  async updateRefreshToken(id: number, refreshToken: string | null) {
+    await this.prisma.user.update({
+      where: { id },
+      data: { refreshToken },
+    });
+  }
+
+  /**
    * 이메일로 사용자를 찾고 정보가 있으면 업데이트, 없으면 기본 섹션과 함께 생성합니다.
    * 주로 소셜 로그인 시 활용됩니다.
    * @param data 사용자 정보 (이메일, 소셜 ID, 가입 경로)

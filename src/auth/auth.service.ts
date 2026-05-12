@@ -1,4 +1,8 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
@@ -69,15 +73,64 @@ export class AuthService {
   }
 
   /**
-   * 검증된 사용자 정보를 바탕으로 JWT 액세스 토큰을 생성합니다.
+   * 검증된 사용자 정보를 바탕으로 JWT 액세스 토큰과 리프레시 토큰을 생성합니다.
+   * 리프레시 토큰은 보안을 위해 해싱하여 DB에 저장합니다.
    * @param user 이메일과 ID를 포함한 사용자 정보
-   * @returns access_token이 포함된 객체
+   * @returns access_token과 refresh_token이 포함된 객체
    */
   async login(user: { email: string; id: number }) {
     const payload = { email: user.email, sub: user.id };
+    
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        expiresIn: '1h', // 액세스 토큰은 짧게
+      }),
+      this.jwtService.signAsync(payload, {
+        expiresIn: '14d', // 리프레시 토큰은 길게
+      }),
+    ]);
+
+    // 리프레시 토큰을 해싱하여 DB에 저장
+    const hashedRefreshToken = await this.passwordService.hashPassword(refreshToken);
+    await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
+
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: accessToken,
+      refresh_token: refreshToken,
     };
+  }
+
+  /**
+   * 리프레시 토큰을 검증하고 새로운 액세스 토큰을 발급합니다.
+   * @param userId 사용자 ID
+   * @param refreshToken 클라이언트로부터 받은 리프레시 토큰
+   * @returns 새로운 access_token과 refresh_token
+   */
+  async refreshTokens(userId: number, refreshToken: string) {
+    const user = await this.usersService.findOneById(userId);
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException('접근이 거부되었습니다.');
+    }
+
+    const isTokenMatching = await this.passwordService.comparePassword(
+      refreshToken,
+      user.refreshToken,
+    );
+
+    if (!isTokenMatching) {
+      throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
+    }
+
+    // 새로운 토큰 세트 발급
+    return this.login({ email: user.email, id: user.id });
+  }
+
+  /**
+   * 로그아웃 시 사용자의 리프레시 토큰을 무효화합니다.
+   * @param userId 사용자 ID
+   */
+  async logout(userId: number) {
+    await this.usersService.updateRefreshToken(userId, null);
   }
 
   /**

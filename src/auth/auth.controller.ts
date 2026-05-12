@@ -13,6 +13,7 @@ import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { UserEntity } from '../users/entities/user.entity';
 
 interface GoogleRequest extends Request {
   user: {
@@ -62,14 +63,14 @@ export class AuthController {
       message: '구글 로그인에 성공했습니다.',
       data: {
         access_token,
-        user,
+        user: new UserEntity(user),
       },
     };
   }
 
   @Post('register')
   @ApiOperation({ summary: '회원가입' })
-  @ApiResponse({ status: 201, description: '회원가입 성공' })
+  @ApiResponse({ status: 201, description: '회원가입 성공', type: UserEntity })
   @ApiResponse({ status: 409, description: '이미 존재하는 이메일' })
   async register(@Body() registerDto: RegisterDto) {
     const user = await this.authService.register(
@@ -77,13 +78,10 @@ export class AuthController {
       registerDto.password,
     );
 
-    const result: Partial<typeof user> = { ...user };
-    delete result.password;
-
     return {
       success: true,
       message: '회원가입이 완료되었습니다.',
-      data: result,
+      data: new UserEntity(user),
     };
   }
 
@@ -113,7 +111,7 @@ export class AuthController {
       message: '로그인에 성공했습니다.',
       data: {
         access_token,
-        user,
+        user: new UserEntity(user),
       },
     };
   }

@@ -1,7 +1,8 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -10,19 +11,24 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(email: string, password?: string, socialId?: string, provider = 'local') {
+  async register(
+    email: string,
+    password?: string,
+    socialId?: string,
+    provider = 'local',
+  ): Promise<User> {
     const existingUser = await this.usersService.findOneByEmail(email);
     if (existingUser) {
       throw new ConflictException('이미 존재하는 이메일입니다.');
     }
 
-    let hashedPassword = null;
+    let hashedPassword: string | null = null;
     if (password) {
       const salt = await bcrypt.genSalt();
       hashedPassword = await bcrypt.hash(password, salt);
     }
 
-    return this.usersService.create({
+    return await this.usersService.create({
       email,
       password: hashedPassword,
       socialId,
@@ -30,19 +36,23 @@ export class AuthService {
     });
   }
 
-  async validateUser(email: string, pass: string): Promise<any> {
+  async validateUser(
+    email: string,
+    pass: string,
+  ): Promise<Partial<User> | null> {
     const user = await this.usersService.findOneByEmail(email);
     if (user && user.password && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user;
+      const result: Partial<User> = { ...user };
+      delete result.password;
       return result;
     }
     return null;
   }
 
-  async login(user: any) {
+  async login(user: { email: string; id: number }) {
     const payload = { email: user.email, sub: user.id };
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: await this.jwtService.signAsync(payload),
     };
   }
 }

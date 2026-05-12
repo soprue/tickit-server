@@ -13,8 +13,10 @@ export class AuthController {
       registerDto.email,
       registerDto.password,
     );
-    
-    const { password, ...result } = user;
+
+    const result: Partial<typeof user> = { ...user };
+    delete result.password;
+
     return {
       success: true,
       message: '회원가입이 완료되었습니다.',
@@ -30,11 +32,16 @@ export class AuthController {
     );
 
     if (!user) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 일치하지 않습니다.');
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 일치하지 않습니다.',
+      );
     }
 
-    const { access_token } = await this.authService.login(user);
-    
+    const { access_token } = await this.authService.login({
+      email: user.email as string,
+      id: user.id as number,
+    });
+
     return {
       success: true,
       message: '로그인에 성공했습니다.',

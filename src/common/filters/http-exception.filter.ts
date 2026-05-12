@@ -15,15 +15,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
 
+    const message =
+      typeof exceptionResponse === 'object' && exceptionResponse !== null
+        ? (exceptionResponse as Record<string, unknown>).message ||
+          exception.message
+        : exceptionResponse || exception.message;
+
     const errorResponse = {
       success: false,
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message:
-        typeof exceptionResponse === 'object'
-          ? (exceptionResponse as any).message || exception.message
-          : exceptionResponse || exception.message,
+      message: message as string | string[],
     };
 
     response.status(status).json(errorResponse);

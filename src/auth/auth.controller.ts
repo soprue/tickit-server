@@ -6,12 +6,13 @@ import {
   Get,
   UseGuards,
   Req,
+  Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -90,46 +91,27 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   @ApiOperation({
     summary: '구글 로그인 콜백 처리',
-    description: '구글 로그인 성공 후 리다이렉트되어 JWT를 발급받는 엔드포인트입니다.',
+    description:
+      '구글 로그인 성공 후 리다이렉트되어 앱(Deep Link)으로 데이터를 전달합니다.',
   })
-  @ApiResponse({
-    status: 200,
-    description: '구글 로그인 성공 및 JWT 발급',
-    schema: {
-      example: {
-        success: true,
-        data: {
-          message: '구글 로그인에 성공했습니다.',
-          access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          user: {
-            id: 1,
-            email: 'user@gmail.com',
-            provider: 'google',
-            socialId: '123456789',
-            createdAt: '2024-05-12T00:00:00.000Z',
-            updatedAt: '2024-05-12T00:00:00.000Z',
-          },
-        },
-      },
-    },
-  })
-  async googleAuthRedirect(@Req() req: GoogleRequest) {
+  async googleAuthRedirect(@Req() req: GoogleRequest, @Res() res: Response) {
     const user = await this.authService.validateOAuthUser({
       email: req.user.email,
       socialId: req.user.socialId,
       provider: 'google',
     });
 
-    const { access_token } = await this.authService.login({
+    const { access_token, refresh_token } = await this.authService.login({
       email: user.email,
       id: user.id,
     });
 
-    return {
-      message: '구글 로그인에 성공했습니다.',
-      access_token,
-      user: new UserEntity(user),
-    };
+    // 앱의 커스텀 프로토콜(tickit://)로 리다이렉트하여 토큰 전달
+    const userEntity = new UserEntity(user);
+    const userData = encodeURIComponent(JSON.stringify(userEntity));
+    const redirectUrl = `tickit://auth?access_token=${access_token}&refresh_token=${refresh_token}&user=${userData}`;
+
+    return res.redirect(redirectUrl);
   }
 
   @Post('register')

@@ -112,7 +112,7 @@ describe('AuthService', () => {
 
       mockUsersService.findOneById.mockResolvedValue(user);
       mockPasswordService.comparePassword.mockResolvedValue(true);
-      
+
       // login 메서드가 내부적으로 호출되므로 mock 설정
       mockJwtService.signAsync.mockResolvedValue('token');
       mockPasswordService.hashPassword.mockResolvedValue('hashed');

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Response as ExpressResponse } from 'express';
 
 export interface Response<T> {
   success: true;
@@ -24,11 +25,23 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
   ): Observable<Response<T>> {
     return next.handle().pipe(
       map((data) => {
-        // 이미 형식이 맞춰져 있는 경우 (예: 커스텀 메시지가 포함된 경우) 대응
-        if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+        const res = context.switchToHttp().getResponse<ExpressResponse>();
+
+        // 수동으로 응답을 보낸 경우(headersSent) 가로채지 않음
+        if (res.headersSent) {
           return data;
         }
-        
+
+        // 이미 형식이 맞춰져 있는 경우 (예: 커스텀 메시지가 포함된 경우) 대응
+        if (
+          data &&
+          typeof data === 'object' &&
+          'success' in data &&
+          'data' in data
+        ) {
+          return data;
+        }
+
         return {
           success: true,
           data,

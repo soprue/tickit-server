@@ -17,7 +17,10 @@ export class UserEntity implements User {
   @ApiHideProperty()
   refreshToken: string | null;
 
-  @ApiProperty({ example: 'local', description: '가입 경로 (local, google 등)' })
+  @ApiProperty({
+    example: 'local',
+    description: '가입 경로 (local, google 등)',
+  })
   provider: string;
 
   @ApiProperty({

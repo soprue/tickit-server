@@ -80,7 +80,7 @@ export class AuthService {
    */
   async login(user: { email: string; id: number }) {
     const payload = { email: user.email, sub: user.id };
-    
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         expiresIn: '1h', // 액세스 토큰은 짧게
@@ -91,7 +91,8 @@ export class AuthService {
     ]);
 
     // 리프레시 토큰을 해싱하여 DB에 저장
-    const hashedRefreshToken = await this.passwordService.hashPassword(refreshToken);
+    const hashedRefreshToken =
+      await this.passwordService.hashPassword(refreshToken);
     await this.usersService.updateRefreshToken(user.id, hashedRefreshToken);
 
     return {

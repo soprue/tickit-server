@@ -1,5 +1,5 @@
-import { LoggingInterceptor } from "./common/interceptors/logging.interceptor";
-import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -19,8 +19,9 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // CORS
-  const allowedOrigins = configService.get<string>('ALLOWED_ORIGINS')?.split(',') || [];
-  
+  const allowedOrigins =
+    configService.get<string>('ALLOWED_ORIGINS')?.split(',') || [];
+
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl)
@@ -28,9 +29,10 @@ async function bootstrap() {
         return callback(null, true);
       }
 
-      const isAllowed = allowedOrigins.includes(origin) || 
-                        origin.startsWith('app://') || 
-                        origin.startsWith('file://');
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        origin.startsWith('app://') ||
+        origin.startsWith('file://');
 
       if (isAllowed) {
         callback(null, true);

@@ -20,7 +20,9 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiQuery,
+  ApiResponse,
 } from '@nestjs/swagger';
+import { ReminderEntity } from './entities/reminder.entity';
 
 @ApiTags('Reminders (리마인더)')
 @ApiBearerAuth()
@@ -31,11 +33,16 @@ export class RemindersController {
 
   @Post()
   @ApiOperation({ summary: '리마인더 생성' })
-  create(
+  @ApiResponse({ status: 201, type: ReminderEntity })
+  async create(
     @GetUser('id') userId: number,
     @Body() createReminderDto: CreateReminderDto,
   ) {
-    return this.remindersService.create(userId, createReminderDto);
+    const reminder = await this.remindersService.create(
+      userId,
+      createReminderDto,
+    );
+    return new ReminderEntity(reminder);
   }
 
   @Get()
@@ -45,35 +52,50 @@ export class RemindersController {
     required: false,
     description: '섹션별 필터링',
   })
-  findAll(
+  @ApiResponse({ status: 200, type: [ReminderEntity] })
+  async findAll(
     @GetUser('id') userId: number,
     @Query('sectionId') sectionId?: string,
   ) {
-    return this.remindersService.findAll(userId, sectionId);
+    const reminders = await this.remindersService.findAll(userId, sectionId);
+    return reminders.map((reminder) => new ReminderEntity(reminder));
   }
 
   @Get(':id')
   @ApiOperation({ summary: '리마인더 상세 조회' })
-  findOne(
+  @ApiResponse({ status: 200, type: ReminderEntity })
+  async findOne(
     @GetUser('id') userId: number,
     @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.remindersService.findOne(userId, id);
+    const reminder = await this.remindersService.findOne(userId, id);
+    return new ReminderEntity(reminder);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: '리마인더 수정' })
-  update(
+  @ApiResponse({ status: 200, type: ReminderEntity })
+  async update(
     @GetUser('id') userId: number,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateReminderDto: UpdateReminderDto,
   ) {
-    return this.remindersService.update(userId, id, updateReminderDto);
+    const reminder = await this.remindersService.update(
+      userId,
+      id,
+      updateReminderDto,
+    );
+    return new ReminderEntity(reminder);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: '리마인더 삭제' })
-  remove(@GetUser('id') userId: number, @Param('id', ParseIntPipe) id: number) {
-    return this.remindersService.remove(userId, id);
+  @ApiResponse({ status: 200, type: ReminderEntity })
+  async remove(
+    @GetUser('id') userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const reminder = await this.remindersService.remove(userId, id);
+    return new ReminderEntity(reminder);
   }
 }

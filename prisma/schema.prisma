@@ -30,17 +30,23 @@ model Section {
   reminders Reminder[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, deletedAt])
 }
 
 model Reminder {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   text      String
   time      DateTime?
-  isAllDay  Boolean  @default(false)
-  notified  Boolean  @default(false)
-  done      Boolean  @default(false)
-  section   Section  @relation(fields: [sectionId], references: [id])
+  isAllDay  Boolean   @default(false)
+  notified  Boolean   @default(false)
+  done      Boolean   @default(false)
+  section   Section   @relation(fields: [sectionId], references: [id])
   sectionId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([sectionId, deletedAt])
 }

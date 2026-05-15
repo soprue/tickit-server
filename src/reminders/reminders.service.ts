@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SectionsService } from '../sections/sections.service';
 import { ReminderNotFoundException } from '../common/exceptions/reminder-not-found.exception';
 import { UnauthorizedSectionException } from '../common/exceptions/unauthorized-section.exception';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @Injectable()
 export class RemindersService {
@@ -40,10 +41,15 @@ export class RemindersService {
   }
 
   /**
-   * 사용자의 삭제되지 않은 모든 리마인더를 조회합니다.
+   * 사용자의 삭제되지 않은 모든 리마인더를 조회합니다. (Cursor Pagination 적용)
    */
-  async findAll(userId: number, sectionId?: string) {
+  async findAll(userId: number, query: PaginationQueryDto) {
+    const { take, cursor, sectionId } = query;
+
     return await this.prisma.reminder.findMany({
+      take,
+      skip: cursor ? 1 : 0, // cursor가 있으면 해당 cursor 다음부터 가져옴
+      cursor: cursor ? { id: cursor } : undefined,
       where: {
         deletedAt: null,
         section: {
@@ -60,7 +66,7 @@ export class RemindersService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'desc' }, // 최신순 정렬
     });
   }
 

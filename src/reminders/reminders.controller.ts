@@ -19,10 +19,10 @@ import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
-  ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
 import { ReminderEntity } from './entities/reminder.entity';
+import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
 @ApiTags('Reminders (리마인더)')
 @ApiBearerAuth()
@@ -46,18 +46,13 @@ export class RemindersController {
   }
 
   @Get()
-  @ApiOperation({ summary: '나의 리마인더 목록 조회' })
-  @ApiQuery({
-    name: 'sectionId',
-    required: false,
-    description: '섹션별 필터링',
-  })
+  @ApiOperation({ summary: '나의 리마인더 목록 조회 (Cursor 기반 페이지네이션)' })
   @ApiResponse({ status: 200, type: [ReminderEntity] })
   async findAll(
     @GetUser('id') userId: number,
-    @Query('sectionId') sectionId?: string,
+    @Query() query: PaginationQueryDto,
   ) {
-    const reminders = await this.remindersService.findAll(userId, sectionId);
+    const reminders = await this.remindersService.findAll(userId, query);
     return reminders.map((reminder) => new ReminderEntity(reminder));
   }
 

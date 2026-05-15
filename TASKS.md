@@ -20,10 +20,10 @@
 - [x] Swagger API 문서화 및 CORS 설정 추가
 
 ## 📋 Step 3: 리마인더 CRUD API 개발
-- [ ] `RemindersModule` 리소스 생성 (Controller, Service, DTO)
-- [ ] `User` - `Reminder` 1:N 관계 매핑 및 저장 로직 구현
-- [ ] 리마인더 목록 조회, 생성, 수정, 삭제 API 구현
-- [ ] `class-validator`를 이용한 요청 데이터 검증 (DTO)
+- [x] `RemindersModule` 리소스 생성 (Controller, Service, DTO)
+- [x] `User` - `Reminder` 1:N 관계 매핑 및 저장 로직 구현
+- [x] 리마인더 목록 조회, 생성, 수정, 삭제 API 구현
+- [x] `class-validator`를 이용한 요청 데이터 검증 (DTO)
 
 ## 🔄 Step 4: 데이터 동기화 전략 구현
 - [ ] 리마인더 모델에 `updatedAt`, `deletedAt` (Soft Delete) 필드 추가

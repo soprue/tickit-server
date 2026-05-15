@@ -40,7 +40,11 @@ export class RemindersController {
 
   @Get()
   @ApiOperation({ summary: '나의 리마인더 목록 조회' })
-  @ApiQuery({ name: 'sectionId', required: false, description: '섹션별 필터링' })
+  @ApiQuery({
+    name: 'sectionId',
+    required: false,
+    description: '섹션별 필터링',
+  })
   findAll(
     @GetUser('id') userId: number,
     @Query('sectionId') sectionId?: string,
@@ -50,7 +54,10 @@ export class RemindersController {
 
   @Get(':id')
   @ApiOperation({ summary: '리마인더 상세 조회' })
-  findOne(@GetUser('id') userId: number, @Param('id', ParseIntPipe) id: number) {
+  findOne(
+    @GetUser('id') userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
     return this.remindersService.findOne(userId, id);
   }
 

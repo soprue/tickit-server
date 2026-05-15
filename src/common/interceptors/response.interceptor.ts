@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Response as ExpressResponse } from 'express';
 
-export interface Response<T> {
+export interface ResponseFormat<T> {
   success: true;
   message?: string;
   data: T;
@@ -18,13 +18,16 @@ export interface Response<T> {
  * 성공적인 응답을 일관된 형식({ success: true, data: ... })으로 래핑하는 인터셉터입니다.
  */
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
+export class ResponseInterceptor<T> implements NestInterceptor<
+  T,
+  ResponseFormat<T> | T
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<Response<T>> {
+  ): Observable<ResponseFormat<T> | T> {
     return next.handle().pipe(
-      map((data) => {
+      map((data: T) => {
         const res = context.switchToHttp().getResponse<ExpressResponse>();
 
         // 수동으로 응답을 보낸 경우(headersSent) 가로채지 않음

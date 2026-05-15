@@ -25,7 +25,7 @@ export class UsersController {
     type: UserEntity,
   })
   @ApiResponse({ status: 401, description: '인증되지 않은 요청' })
-  getProfile(@GetUser() user: any) {
+  getProfile(@GetUser() user: UserEntity) {
     return new UserEntity(user);
   }
 }

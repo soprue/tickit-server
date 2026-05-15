@@ -26,9 +26,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    const exceptionResponse =
+      exception instanceof HttpException ? exception.getResponse() : null;
+
     const message =
       exception instanceof HttpException
-        ? exception.getResponse()
+        ? exceptionResponse
         : 'Internal server error';
 
     const errorResponse = {
@@ -38,7 +41,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.url,
       message:
         typeof message === 'object' && message !== null
-          ? (message as any).message || (message as any).error || message
+          ? (message as Record<string, unknown>).message ||
+            (message as Record<string, unknown>).error ||
+            message
           : message,
     };
 

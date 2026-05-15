@@ -48,7 +48,7 @@ export class AuthController {
     description: '서버의 리프레시 토큰을 무효화하여 로그아웃 처리합니다.',
   })
   @ApiResponse({ status: 200, description: '로그아웃 성공' })
-  async logout(@GetUser('userId') userId: number) {
+  async logout(@GetUser('id') userId: number) {
     await this.authService.logout(userId);
     return { message: '로그아웃 되었습니다.' };
   }

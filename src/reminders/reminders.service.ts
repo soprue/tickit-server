@@ -15,17 +15,28 @@ export class RemindersService {
 
   /**
    * 새로운 리마인더를 생성합니다.
+   * 최적화: 섹션 소유권 확인과 생성을 한 번의 쿼리로 처리합니다.
    */
   async create(userId: number, createReminderDto: CreateReminderDto) {
-    // 섹션 소유권 확인 (SectionsService 활용)
-    await this.sectionsService.findOne(userId, createReminderDto.sectionId);
-
-    return await this.prisma.reminder.create({
-      data: {
-        ...createReminderDto,
-        time: createReminderDto.time ? new Date(createReminderDto.time) : null,
-      },
-    });
+    try {
+      return await this.prisma.reminder.create({
+        data: {
+          text: createReminderDto.text,
+          time: createReminderDto.time ? new Date(createReminderDto.time) : null,
+          isAllDay: createReminderDto.isAllDay || false,
+          section: {
+            connect: {
+              id: createReminderDto.sectionId,
+              userId: userId, // 섹션의 userId가 현재 유저와 일치해야만 성공
+              deletedAt: null,
+            },
+          },
+        },
+      });
+    } catch {
+      // connect 조건이 맞지 않으면(섹션이 없거나 주인이 아니면) 에러 발생
+      throw new UnauthorizedSectionException();
+    }
   }
 
   /**
@@ -34,10 +45,10 @@ export class RemindersService {
   async findAll(userId: number, sectionId?: string) {
     return await this.prisma.reminder.findMany({
       where: {
-        deletedAt: null, // Soft delete 필터링
+        deletedAt: null,
         section: {
           userId: userId,
-          deletedAt: null, // 삭제된 섹션의 리마인더도 제외
+          deletedAt: null,
           ...(sectionId ? { id: sectionId } : {}),
         },
       },
@@ -58,15 +69,17 @@ export class RemindersService {
    */
   async findOne(userId: number, id: number) {
     const reminder = await this.prisma.reminder.findFirst({
-      where: { 
+      where: {
         id,
         deletedAt: null,
         section: {
           userId,
-          deletedAt: null
-        }
+          deletedAt: null,
+        },
       },
-      include: { section: true },
+      include: {
+        section: true,
+      },
     });
 
     if (!reminder) {
@@ -78,43 +91,58 @@ export class RemindersService {
 
   /**
    * 리마인더 정보를 수정합니다.
+   * 최적화: 한 번의 update 쿼리로 소유권 확인과 수정을 동시에 시도합니다.
    */
   async update(
     userId: number,
     id: number,
     updateReminderDto: UpdateReminderDto,
   ) {
-    await this.findOne(userId, id);
-
-    // 섹션 이동 시 해당 섹션 소유권 확인
+    // 1. 섹션 이동이 포함된 경우, 이동할 섹션에 대한 권한 먼저 확인 (이건 별도 조회가 필요)
     if (updateReminderDto.sectionId) {
-      try {
-        await this.sectionsService.findOne(userId, updateReminderDto.sectionId);
-      } catch {
-        throw new UnauthorizedSectionException();
-      }
+      await this.sectionsService.findOne(userId, updateReminderDto.sectionId);
     }
 
-    return await this.prisma.reminder.update({
-      where: { id },
-      data: {
-        ...updateReminderDto,
-        time: updateReminderDto.time
-          ? new Date(updateReminderDto.time)
-          : undefined,
-      },
-    });
+    try {
+      // 2. update 시 where 절에 소유권 조건을 포함하여 최적화
+      return await this.prisma.reminder.update({
+        where: {
+          id: id,
+          deletedAt: null,
+          section: {
+            userId: userId,
+          },
+        },
+        data: {
+          ...updateReminderDto,
+          time: updateReminderDto.time
+            ? new Date(updateReminderDto.time)
+            : undefined,
+        },
+      });
+    } catch {
+      throw new ReminderNotFoundException();
+    }
   }
 
   /**
    * 리마인더를 소프트 삭제합니다.
+   * 최적화: where 절에 소유권 조건을 넣어 한 번에 처리합니다.
    */
   async remove(userId: number, id: number) {
-    await this.findOne(userId, id);
-
-    return await this.prisma.reminder.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    try {
+      return await this.prisma.reminder.update({
+        where: {
+          id: id,
+          deletedAt: null,
+          section: {
+            userId: userId,
+          },
+        },
+        data: { deletedAt: new Date() },
+      });
+    } catch {
+      throw new ReminderNotFoundException();
+    }
   }
 }

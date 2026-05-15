@@ -23,6 +23,10 @@ export class SectionEntity implements Section {
   @ApiProperty({ description: '수정일' })
   updatedAt: Date;
 
+  @Exclude()
+  @ApiHideProperty()
+  deletedAt: Date | null;
+
   @ApiProperty({ type: () => [ReminderEntity], required: false })
   @Type(() => ReminderEntity)
   reminders?: ReminderEntity[];

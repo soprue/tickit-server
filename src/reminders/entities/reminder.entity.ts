@@ -40,6 +40,10 @@ export class ReminderEntity implements Reminder {
   @ApiProperty({ description: '수정일' })
   updatedAt: Date;
 
+  @Exclude()
+  @ApiHideProperty()
+  deletedAt: Date | null;
+
   constructor(partial: Partial<ReminderEntity>) {
     Object.assign(this, partial);
   }

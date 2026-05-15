@@ -66,7 +66,11 @@ export class RemindersService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' }, // 최신순 정렬
+      orderBy: [
+        { done: 'asc' }, // 미완료(false)가 위로, 완료(true)가 아래로
+        { isAllDay: 'desc' }, // 하루종일(true)이 위로
+        { time: 'desc' }, // 시간 내림차순
+      ],
     });
   }
 

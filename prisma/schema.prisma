@@ -32,7 +32,7 @@ model Section {
   updatedAt DateTime   @updatedAt
   deletedAt DateTime?
 
-  @@index([userId, deletedAt])
+  @@index([userId, deletedAt, createdAt])
 }
 
 model Reminder {
@@ -48,5 +48,5 @@ model Reminder {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@index([sectionId, deletedAt])
+  @@index([sectionId, deletedAt, done, isAllDay, time])
 }

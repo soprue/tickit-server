@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateReminderDto } from './dto/create-reminder.dto';
 import { UpdateReminderDto } from './dto/update-reminder.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { SectionsService } from '../sections/sections.service';
+import { ReminderNotFoundException } from '../common/exceptions/reminder-not-found.exception';
+import { UnauthorizedSectionException } from '../common/exceptions/unauthorized-section.exception';
 
 @Injectable()
 export class RemindersService {
@@ -59,7 +61,7 @@ export class RemindersService {
     });
 
     if (!reminder || reminder.section.userId !== userId) {
-      throw new NotFoundException('리마인더를 찾을 수 없습니다.');
+      throw new ReminderNotFoundException();
     }
 
     return reminder;
@@ -77,7 +79,11 @@ export class RemindersService {
 
     // 섹션 이동 시 해당 섹션 소유권 확인
     if (updateReminderDto.sectionId) {
-      await this.sectionsService.findOne(userId, updateReminderDto.sectionId);
+      try {
+        await this.sectionsService.findOne(userId, updateReminderDto.sectionId);
+      } catch {
+        throw new UnauthorizedSectionException();
+      }
     }
 
     return await this.prisma.reminder.update({

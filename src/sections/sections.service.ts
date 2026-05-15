@@ -1,11 +1,9 @@
-import {
-  Injectable,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { SectionNotFoundException } from '../common/exceptions/section-not-found.exception';
+import { FixedSectionException } from '../common/exceptions/fixed-section.exception';
 
 @Injectable()
 export class SectionsService {
@@ -43,7 +41,7 @@ export class SectionsService {
     });
 
     if (!section || section.userId !== userId) {
-      throw new NotFoundException('섹션을 찾을 수 없습니다.');
+      throw new SectionNotFoundException();
     }
 
     return section;
@@ -79,9 +77,9 @@ export class SectionsService {
   /**
    * 고정 섹션 여부를 확인하여 예외를 발생시킵니다.
    */
-  private validateIfFixed(isFixed: boolean, action: string) {
+  private validateIfFixed(isFixed: boolean, action: '수정' | '삭제') {
     if (isFixed) {
-      throw new ForbiddenException(`기본 섹션은 ${action}할 수 없습니다.`);
+      throw new FixedSectionException(action);
     }
   }
 }

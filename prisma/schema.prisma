@@ -10,12 +10,15 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  password  String
-  sections  Section[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String?
+  provider     String    @default("local")
+  socialId     String?
+  refreshToken String?
+  sections     Section[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Section {

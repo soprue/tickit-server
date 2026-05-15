@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, User } from '@prisma/client';
+import { DEFAULT_SECTIONS } from '../common/constants/sections.constants';
 
 @Injectable()
 export class UsersService {
@@ -27,10 +28,7 @@ export class UsersService {
       data: {
         ...data,
         sections: {
-          create: [
-            { title: 'Everyday', isFixed: true },
-            { title: 'To Do', isFixed: true },
-          ],
+          create: DEFAULT_SECTIONS,
         },
       },
     });
@@ -92,10 +90,7 @@ export class UsersService {
         socialId: data.socialId,
         provider: data.provider,
         sections: {
-          create: [
-            { title: 'Everyday', isFixed: true },
-            { title: 'To Do', isFixed: true },
-          ],
+          create: DEFAULT_SECTIONS,
         },
       },
     });

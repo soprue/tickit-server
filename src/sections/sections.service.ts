@@ -34,7 +34,8 @@ export class SectionsService {
   }
 
   /**
-   * 특정 섹션을 상세 조회합니다. (본인 소유 확인)
+   * 특정 섹션을 상세 조회합니다.
+   * 소유권 확인 로직 포함
    */
   async findOne(userId: number, id: string) {
     const section = await this.prisma.section.findUnique({
@@ -54,9 +55,7 @@ export class SectionsService {
   async update(userId: number, id: string, updateSectionDto: UpdateSectionDto) {
     const section = await this.findOne(userId, id);
 
-    if (section.isFixed) {
-      throw new ForbiddenException('기본 섹션은 수정할 수 없습니다.');
-    }
+    this.validateIfFixed(section.isFixed, '수정');
 
     return await this.prisma.section.update({
       where: { id },
@@ -70,12 +69,19 @@ export class SectionsService {
   async remove(userId: number, id: string) {
     const section = await this.findOne(userId, id);
 
-    if (section.isFixed) {
-      throw new ForbiddenException('기본 섹션은 삭제할 수 없습니다.');
-    }
+    this.validateIfFixed(section.isFixed, '삭제');
 
     return await this.prisma.section.delete({
       where: { id },
     });
+  }
+
+  /**
+   * 고정 섹션 여부를 확인하여 예외를 발생시킵니다.
+   */
+  private validateIfFixed(isFixed: boolean, action: string) {
+    if (isFixed) {
+      throw new ForbiddenException(`기본 섹션은 ${action}할 수 없습니다.`);
+    }
   }
 }

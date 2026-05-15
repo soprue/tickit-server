@@ -6,23 +6,21 @@ import {
 import { CreateReminderDto } from './dto/create-reminder.dto';
 import { UpdateReminderDto } from './dto/update-reminder.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { SectionsService } from '../sections/sections.service';
 
 @Injectable()
 export class RemindersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private sectionsService: SectionsService,
+  ) {}
 
   /**
    * 새로운 리마인더를 생성합니다.
-   * 해당 섹션이 사용자의 소유인지 확인합니다.
    */
   async create(userId: number, createReminderDto: CreateReminderDto) {
-    const section = await this.prisma.section.findUnique({
-      where: { id: createReminderDto.sectionId },
-    });
-
-    if (!section || section.userId !== userId) {
-      throw new ForbiddenException('해당 섹션에 권한이 없습니다.');
-    }
+    // 섹션 소유권 확인 (SectionsService 활용)
+    await this.sectionsService.findOne(userId, createReminderDto.sectionId);
 
     return await this.prisma.reminder.create({
       data: {
@@ -33,7 +31,7 @@ export class RemindersService {
   }
 
   /**
-   * 사용자의 모든 리마인더를 조회합니다. (또는 섹션별 필터링)
+   * 사용자의 모든 리마인더를 조회합니다.
    */
   async findAll(userId: number, sectionId?: string) {
     return await this.prisma.reminder.findMany({
@@ -44,14 +42,19 @@ export class RemindersService {
         },
       },
       include: {
-        section: true,
+        section: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   /**
-   * 리마인더 상세 조회
+   * 리마인더 상세 조회 (소유권 확인 포함)
    */
   async findOne(userId: number, id: number) {
     const reminder = await this.prisma.reminder.findUnique({
@@ -69,24 +72,25 @@ export class RemindersService {
   /**
    * 리마인더 정보를 수정합니다.
    */
-  async update(userId: number, id: number, updateReminderDto: UpdateReminderDto) {
+  async update(
+    userId: number,
+    id: number,
+    updateReminderDto: UpdateReminderDto,
+  ) {
     await this.findOne(userId, id);
 
     // 섹션 이동 시 해당 섹션 소유권 확인
     if (updateReminderDto.sectionId) {
-      const section = await this.prisma.section.findUnique({
-        where: { id: updateReminderDto.sectionId },
-      });
-      if (!section || section.userId !== userId) {
-        throw new ForbiddenException('이동하려는 섹션에 권한이 없습니다.');
-      }
+      await this.sectionsService.findOne(userId, updateReminderDto.sectionId);
     }
 
     return await this.prisma.reminder.update({
       where: { id },
       data: {
         ...updateReminderDto,
-        time: updateReminderDto.time ? new Date(updateReminderDto.time) : undefined,
+        time: updateReminderDto.time
+          ? new Date(updateReminderDto.time)
+          : undefined,
       },
     });
   }

@@ -29,13 +29,15 @@ export class RemindersService {
   }
 
   /**
-   * 사용자의 모든 리마인더를 조회합니다.
+   * 사용자의 삭제되지 않은 모든 리마인더를 조회합니다.
    */
   async findAll(userId: number, sectionId?: string) {
     return await this.prisma.reminder.findMany({
       where: {
+        deletedAt: null, // Soft delete 필터링
         section: {
           userId: userId,
+          deletedAt: null, // 삭제된 섹션의 리마인더도 제외
           ...(sectionId ? { id: sectionId } : {}),
         },
       },
@@ -52,15 +54,22 @@ export class RemindersService {
   }
 
   /**
-   * 리마인더 상세 조회 (소유권 확인 포함)
+   * 리마인더 상세 조회 (삭제된 항목 제외)
    */
   async findOne(userId: number, id: number) {
-    const reminder = await this.prisma.reminder.findUnique({
-      where: { id },
+    const reminder = await this.prisma.reminder.findFirst({
+      where: { 
+        id,
+        deletedAt: null,
+        section: {
+          userId,
+          deletedAt: null
+        }
+      },
       include: { section: true },
     });
 
-    if (!reminder || reminder.section.userId !== userId) {
+    if (!reminder) {
       throw new ReminderNotFoundException();
     }
 
@@ -98,13 +107,14 @@ export class RemindersService {
   }
 
   /**
-   * 리마인더를 삭제합니다.
+   * 리마인더를 소프트 삭제합니다.
    */
   async remove(userId: number, id: number) {
     await this.findOne(userId, id);
 
-    return await this.prisma.reminder.delete({
+    return await this.prisma.reminder.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
   }
 }

@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -22,25 +26,31 @@ export class SectionsService {
   }
 
   /**
-   * 해당 사용자의 모든 섹션을 조회합니다.
+   * 해당 사용자의 삭제되지 않은 모든 섹션을 조회합니다.
    */
   async findAll(userId: number) {
     return await this.prisma.section.findMany({
-      where: { userId },
+      where: { 
+        userId,
+        deletedAt: null // Soft delete 필터링
+      },
       orderBy: { createdAt: 'asc' },
     });
   }
 
   /**
-   * 특정 섹션을 상세 조회합니다.
-   * 소유권 확인 로직 포함
+   * 특정 섹션을 상세 조회합니다. (삭제된 섹션 제외)
    */
   async findOne(userId: number, id: string) {
-    const section = await this.prisma.section.findUnique({
-      where: { id },
+    const section = await this.prisma.section.findFirst({
+      where: { 
+        id,
+        userId,
+        deletedAt: null 
+      },
     });
 
-    if (!section || section.userId !== userId) {
+    if (!section) {
       throw new SectionNotFoundException();
     }
 
@@ -62,15 +72,16 @@ export class SectionsService {
   }
 
   /**
-   * 섹션을 삭제합니다. (고정 섹션 제외)
+   * 섹션을 소프트 삭제합니다. (고정 섹션 제외)
    */
   async remove(userId: number, id: string) {
     const section = await this.findOne(userId, id);
 
     this.validateIfFixed(section.isFixed, '삭제');
 
-    return await this.prisma.section.delete({
+    return await this.prisma.section.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
   }
 

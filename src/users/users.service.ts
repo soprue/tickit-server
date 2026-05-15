@@ -20,17 +20,24 @@ export class UsersService {
 
   /**
    * 새로운 사용자를 생성하고 기본 섹션(Everyday, To Do)을 함께 생성합니다.
+   * 명시적 트랜잭션을 사용하여 데이터 일관성을 보장합니다.
    * @param data 사용자 생성 데이터
    * @returns 생성된 사용자 객체
    */
   async createWithDefaultSections(data: Prisma.UserCreateInput): Promise<User> {
-    return await this.prisma.user.create({
-      data: {
-        ...data,
-        sections: {
-          create: DEFAULT_SECTIONS,
-        },
-      },
+    return await this.prisma.$transaction(async (tx) => {
+      // 1. 유저 생성
+      const user = await tx.user.create({ data });
+
+      // 2. 기본 섹션 생성
+      await tx.section.createMany({
+        data: DEFAULT_SECTIONS.map((section) => ({
+          ...section,
+          userId: user.id,
+        })),
+      });
+
+      return user;
     });
   }
 
@@ -70,7 +77,7 @@ export class UsersService {
 
   /**
    * 이메일로 사용자를 찾고 정보가 있으면 업데이트, 없으면 기본 섹션과 함께 생성합니다.
-   * 주로 소셜 로그인 시 활용됩니다.
+   * 명시적 트랜잭션을 통해 원자성을 보장합니다.
    * @param data 사용자 정보 (이메일, 소셜 ID, 가입 경로)
    * @returns 사용자 객체
    */
@@ -79,20 +86,22 @@ export class UsersService {
     socialId?: string;
     provider: string;
   }): Promise<User> {
-    return await this.prisma.user.upsert({
-      where: { email: data.email },
-      update: {
-        socialId: data.socialId,
-        provider: data.provider,
-      },
-      create: {
-        email: data.email,
-        socialId: data.socialId,
-        provider: data.provider,
-        sections: {
-          create: DEFAULT_SECTIONS,
+    const existingUser = await this.findOneByEmail(data.email);
+
+    if (existingUser) {
+      return await this.prisma.user.update({
+        where: { email: data.email },
+        data: {
+          socialId: data.socialId,
+          provider: data.provider,
         },
-      },
+      });
+    }
+
+    return await this.createWithDefaultSections({
+      email: data.email,
+      socialId: data.socialId,
+      provider: data.provider,
     });
   }
 }

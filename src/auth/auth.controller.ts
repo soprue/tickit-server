@@ -270,6 +270,7 @@ export class AuthController {
         data: {
           message: '로그인에 성공했습니다.',
           access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+          refresh_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
           user: {
             id: 1,
             email: 'user@example.com',
@@ -294,7 +295,7 @@ export class AuthController {
       );
     }
 
-    const { access_token } = await this.authService.login({
+    const { access_token, refresh_token } = await this.authService.login({
       email: user.email as string,
       id: user.id as number,
     });
@@ -302,6 +303,7 @@ export class AuthController {
     return {
       message: '로그인에 성공했습니다.',
       access_token,
+      refresh_token,
       user: new UserEntity(user),
     };
   }

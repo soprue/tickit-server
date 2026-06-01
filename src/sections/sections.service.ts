@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -79,9 +75,23 @@ export class SectionsService {
 
     this.validateIfFixed(section.isFixed, '삭제');
 
-    return await this.prisma.section.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    const deletedAt = new Date();
+
+    return await this.prisma.$transaction(async (tx) => {
+      const deletedSection = await tx.section.update({
+        where: { id },
+        data: { deletedAt },
+      });
+
+      await tx.reminder.updateMany({
+        where: {
+          sectionId: id,
+          deletedAt: null,
+        },
+        data: { deletedAt },
+      });
+
+      return deletedSection;
     });
   }
 

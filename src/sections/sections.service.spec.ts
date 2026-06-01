@@ -8,6 +8,7 @@ describe('SectionsService', () => {
   let service: SectionsService;
 
   const mockPrismaService = {
+    $transaction: jest.fn(),
     section: {
       create: jest.fn(),
       findMany: jest.fn(),
@@ -15,6 +16,9 @@ describe('SectionsService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+    },
+    reminder: {
+      updateMany: jest.fn(),
     },
   };
 
@@ -74,17 +78,35 @@ describe('SectionsService', () => {
   });
 
   describe('remove', () => {
-    it('삭제 시 실제로 삭제하는 대신 deletedAt을 업데이트해야 함 (Soft Delete)', async () => {
-      const mockSection = { id: 'uuid', userId: 1, isFixed: false, deletedAt: null };
+    it('삭제 시 섹션과 하위 리마인더를 함께 소프트 삭제해야 함', async () => {
+      const mockSection = {
+        id: 'uuid',
+        userId: 1,
+        isFixed: false,
+        deletedAt: null,
+      };
+      const deletedSection = { ...mockSection, deletedAt: new Date() };
       mockPrismaService.section.findFirst.mockResolvedValue(mockSection);
-      mockPrismaService.section.update.mockResolvedValue({ ...mockSection, deletedAt: new Date() });
+      mockPrismaService.section.update.mockResolvedValue(deletedSection);
+      mockPrismaService.reminder.updateMany.mockResolvedValue({ count: 3 });
+      mockPrismaService.$transaction.mockImplementation((callback) =>
+        callback(mockPrismaService),
+      );
 
-      await service.remove(1, 'uuid');
+      const result = await service.remove(1, 'uuid');
 
       expect(mockPrismaService.section.update).toHaveBeenCalledWith({
         where: { id: 'uuid' },
         data: { deletedAt: expect.any(Date) },
       });
+      expect(mockPrismaService.reminder.updateMany).toHaveBeenCalledWith({
+        where: {
+          sectionId: 'uuid',
+          deletedAt: null,
+        },
+        data: { deletedAt: expect.any(Date) },
+      });
+      expect(result).toBe(deletedSection);
     });
   });
 });

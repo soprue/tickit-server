@@ -7,6 +7,9 @@ import { ReminderNotFoundException } from '../common/exceptions/reminder-not-fou
 import { UnauthorizedSectionException } from '../common/exceptions/unauthorized-section.exception';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 
+const EVERYDAY_SECTION_TITLE = 'Everyday';
+const DAILY_RESET_TIME_ZONE = 'Asia/Seoul';
+
 @Injectable()
 export class RemindersService {
   constructor(
@@ -23,7 +26,9 @@ export class RemindersService {
       return await this.prisma.reminder.create({
         data: {
           text: createReminderDto.text,
-          time: createReminderDto.time ? new Date(createReminderDto.time) : null,
+          time: createReminderDto.time
+            ? new Date(createReminderDto.time)
+            : null,
           isAllDay: createReminderDto.isAllDay || false,
           section: {
             connect: {
@@ -46,6 +51,8 @@ export class RemindersService {
   async findAll(userId: number, query: PaginationQueryDto) {
     const { take, cursor, sectionId } = query;
 
+    await this.resetEverydayReminders(userId);
+
     return await this.prisma.reminder.findMany({
       take,
       skip: cursor ? 1 : 0, // cursor가 있으면 해당 cursor 다음부터 가져옴
@@ -56,14 +63,6 @@ export class RemindersService {
           userId: userId,
           deletedAt: null,
           ...(sectionId ? { id: sectionId } : {}),
-        },
-      },
-      include: {
-        section: {
-          select: {
-            id: true,
-            title: true,
-          },
         },
       },
       orderBy: [
@@ -79,6 +78,8 @@ export class RemindersService {
    * 리마인더 상세 조회 (삭제된 항목 제외)
    */
   async findOne(userId: number, id: number) {
+    await this.resetEverydayReminders(userId);
+
     const reminder = await this.prisma.reminder.findFirst({
       where: {
         id,
@@ -87,9 +88,6 @@ export class RemindersService {
           userId,
           deletedAt: null,
         },
-      },
-      include: {
-        section: true,
       },
     });
 
@@ -155,5 +153,42 @@ export class RemindersService {
     } catch {
       throw new ReminderNotFoundException();
     }
+  }
+
+  private async resetEverydayReminders(userId: number) {
+    const today = this.getTodayResetDate();
+
+    await this.prisma.reminder.updateMany({
+      where: {
+        deletedAt: null,
+        OR: [{ lastResetDate: null }, { lastResetDate: { not: today } }],
+        section: {
+          userId,
+          title: EVERYDAY_SECTION_TITLE,
+          isFixed: true,
+          deletedAt: null,
+        },
+      },
+      data: {
+        done: false,
+        notified: false,
+        lastResetDate: today,
+      },
+    });
+  }
+
+  private getTodayResetDate(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: DAILY_RESET_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+
+    const values = Object.fromEntries(
+      parts.map((part) => [part.type, part.value]),
+    );
+
+    return `${values.year}-${values.month}-${values.day}`;
   }
 }

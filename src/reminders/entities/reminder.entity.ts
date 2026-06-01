@@ -26,6 +26,13 @@ export class ReminderEntity implements Reminder {
   @ApiProperty({ example: false, description: '완료 여부' })
   done: boolean;
 
+  @ApiProperty({
+    example: '2026-06-01',
+    description: 'Everyday 리마인더가 마지막으로 일일 리셋된 날짜',
+    nullable: true,
+  })
+  lastResetDate: string | null;
+
   @ApiProperty({ description: '소속 섹션 ID' })
   sectionId: string;
 

@@ -16,6 +16,7 @@ describe('RemindersService', () => {
       findMany: jest.fn(),
       findFirst: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
     },
   };
@@ -69,22 +70,69 @@ describe('RemindersService', () => {
     });
 
     it('권한이 없는 섹션이면 UnauthorizedSectionException을 던져야 함', async () => {
-      mockPrismaService.reminder.create.mockRejectedValue(new Error('Prisma error'));
+      mockPrismaService.reminder.create.mockRejectedValue(
+        new Error('Prisma error'),
+      );
 
-      await expect(service.create(1, { text: 'Test', sectionId: 'wrong' })).rejects.toThrow(UnauthorizedSectionException);
+      await expect(
+        service.create(1, { text: 'Test', sectionId: 'wrong' }),
+      ).rejects.toThrow(UnauthorizedSectionException);
+    });
+  });
+
+  describe('findAll', () => {
+    it('Everyday 리마인더를 조회 전에 오늘 기준으로 리셋해야 함', async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-05-31T15:30:00.000Z'));
+
+      mockPrismaService.reminder.updateMany.mockResolvedValue({ count: 2 });
+      mockPrismaService.reminder.findMany.mockResolvedValue([]);
+
+      await service.findAll(1, {});
+
+      expect(mockPrismaService.reminder.updateMany).toHaveBeenCalledWith({
+        where: {
+          deletedAt: null,
+          OR: [
+            { lastResetDate: null },
+            { lastResetDate: { not: '2026-06-01' } },
+          ],
+          section: {
+            userId: 1,
+            title: 'Everyday',
+            isFixed: true,
+            deletedAt: null,
+          },
+        },
+        data: {
+          done: false,
+          notified: false,
+          lastResetDate: '2026-06-01',
+        },
+      });
+      expect(mockPrismaService.reminder.findMany).toHaveBeenCalled();
+
+      jest.useRealTimers();
     });
   });
 
   describe('update', () => {
     it('다른 사람의 섹션으로 이동하려 하면 UnauthorizedSectionException을 던져야 함', async () => {
-      mockSectionsService.findOne.mockRejectedValue(new SectionNotFoundException());
+      mockSectionsService.findOne.mockRejectedValue(
+        new SectionNotFoundException(),
+      );
 
-      await expect(service.update(1, 1, { sectionId: 'other-uuid' })).rejects.toThrow(SectionNotFoundException);
+      await expect(
+        service.update(1, 1, { sectionId: 'other-uuid' }),
+      ).rejects.toThrow(SectionNotFoundException);
     });
 
     it('자신의 리마인더를 수정해야 함', async () => {
       const updateDto = { text: 'Updated' };
-      mockPrismaService.reminder.update.mockResolvedValue({ id: 1, ...updateDto });
+      mockPrismaService.reminder.update.mockResolvedValue({
+        id: 1,
+        ...updateDto,
+      });
 
       await service.update(1, 1, updateDto);
 
@@ -96,7 +144,10 @@ describe('RemindersService', () => {
 
     it('리마인더 알림 발송 여부를 수정해야 함', async () => {
       const updateDto = { notified: true };
-      mockPrismaService.reminder.update.mockResolvedValue({ id: 1, ...updateDto });
+      mockPrismaService.reminder.update.mockResolvedValue({
+        id: 1,
+        ...updateDto,
+      });
 
       await service.update(1, 1, updateDto);
 
@@ -109,7 +160,10 @@ describe('RemindersService', () => {
 
   describe('remove', () => {
     it('리마인더를 소프트 삭제해야 함 (최적화 버전)', async () => {
-      mockPrismaService.reminder.update.mockResolvedValue({ id: 1, deletedAt: new Date() });
+      mockPrismaService.reminder.update.mockResolvedValue({
+        id: 1,
+        deletedAt: new Date(),
+      });
 
       await service.remove(1, 1);
 

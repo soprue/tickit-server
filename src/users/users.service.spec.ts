@@ -12,6 +12,7 @@ describe('UsersService', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      upsert: jest.fn(),
     },
     section: {
       createMany: jest.fn(),
@@ -73,6 +74,37 @@ describe('UsersService', () => {
       const result = await service.findOneByEmail(email);
 
       expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({ where: { email } });
+      expect(result).toEqual(mockUser);
+    });
+  });
+
+  describe('upsertByEmail', () => {
+    it('이메일 기준으로 유저를 upsert하고 신규 유저에는 기본 섹션을 생성해야 함', async () => {
+      const data = {
+        email: 'google@example.com',
+        socialId: 'google-id',
+        provider: 'google',
+      };
+      const mockUser = { id: 1, ...data };
+      mockPrismaService.user.upsert.mockResolvedValue(mockUser);
+
+      const result = await service.upsertByEmail(data);
+
+      expect(mockPrismaService.user.upsert).toHaveBeenCalledWith({
+        where: { email: data.email },
+        update: {
+          socialId: data.socialId,
+          provider: data.provider,
+        },
+        create: {
+          email: data.email,
+          socialId: data.socialId,
+          provider: data.provider,
+          sections: {
+            create: DEFAULT_SECTIONS,
+          },
+        },
+      });
       expect(result).toEqual(mockUser);
     });
   });

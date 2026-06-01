@@ -77,7 +77,6 @@ export class UsersService {
 
   /**
    * 이메일로 사용자를 찾고 정보가 있으면 업데이트, 없으면 기본 섹션과 함께 생성합니다.
-   * 명시적 트랜잭션을 통해 원자성을 보장합니다.
    * @param data 사용자 정보 (이메일, 소셜 ID, 가입 경로)
    * @returns 사용자 객체
    */
@@ -86,22 +85,20 @@ export class UsersService {
     socialId?: string;
     provider: string;
   }): Promise<User> {
-    const existingUser = await this.findOneByEmail(data.email);
-
-    if (existingUser) {
-      return await this.prisma.user.update({
-        where: { email: data.email },
-        data: {
-          socialId: data.socialId,
-          provider: data.provider,
+    return await this.prisma.user.upsert({
+      where: { email: data.email },
+      update: {
+        socialId: data.socialId,
+        provider: data.provider,
+      },
+      create: {
+        email: data.email,
+        socialId: data.socialId,
+        provider: data.provider,
+        sections: {
+          create: DEFAULT_SECTIONS,
         },
-      });
-    }
-
-    return await this.createWithDefaultSections({
-      email: data.email,
-      socialId: data.socialId,
-      provider: data.provider,
+      },
     });
   }
 }

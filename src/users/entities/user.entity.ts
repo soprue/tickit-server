@@ -17,6 +17,10 @@ export class UserEntity implements User {
   @ApiHideProperty()
   refreshToken: string | null;
 
+  @Exclude()
+  @ApiHideProperty()
+  everydayLastResetDate: string | null;
+
   @ApiProperty({
     example: 'local',
     description: '가입 경로 (local, google 등)',

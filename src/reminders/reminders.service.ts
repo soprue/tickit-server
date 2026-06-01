@@ -157,23 +157,47 @@ export class RemindersService {
 
   private async resetEverydayReminders(userId: number) {
     const today = this.getTodayResetDate();
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { everydayLastResetDate: true },
+    });
 
-    await this.prisma.reminder.updateMany({
-      where: {
-        deletedAt: null,
-        OR: [{ lastResetDate: null }, { lastResetDate: { not: today } }],
-        section: {
-          userId,
-          title: EVERYDAY_SECTION_TITLE,
-          isFixed: true,
-          deletedAt: null,
+    if (!user || user.everydayLastResetDate === today) {
+      return;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.updateMany({
+        where: {
+          id: userId,
+          OR: [
+            { everydayLastResetDate: null },
+            { everydayLastResetDate: { not: today } },
+          ],
         },
-      },
-      data: {
-        done: false,
-        notified: false,
-        lastResetDate: today,
-      },
+        data: { everydayLastResetDate: today },
+      });
+
+      if (updatedUser.count === 0) {
+        return;
+      }
+
+      await tx.reminder.updateMany({
+        where: {
+          deletedAt: null,
+          section: {
+            userId,
+            title: EVERYDAY_SECTION_TITLE,
+            isFixed: true,
+            deletedAt: null,
+          },
+        },
+        data: {
+          done: false,
+          notified: false,
+          lastResetDate: today,
+        },
+      });
     });
   }
 

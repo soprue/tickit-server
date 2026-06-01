@@ -16,6 +16,7 @@ model User {
   provider     String    @default("local")
   socialId     String?
   refreshToken String?
+  everydayLastResetDate String?
   sections     Section[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

@@ -12,6 +12,7 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import type { Response as ExpressResponse } from 'express';
@@ -72,11 +73,8 @@ export class AuthController {
       },
     },
   })
-  async refresh(
-    @Body('refresh_token') refreshToken: string,
-    @Body('userId') userId: number,
-  ) {
-    return await this.authService.refreshTokens(userId, refreshToken);
+  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
+    return await this.authService.refreshTokens(refreshTokenDto.refresh_token);
   }
 
   @Get('google')

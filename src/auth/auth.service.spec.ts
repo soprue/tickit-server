@@ -15,6 +15,7 @@ const mockUsersService = {
 
 const mockJwtService = {
   signAsync: jest.fn(),
+  verifyAsync: jest.fn(),
 };
 
 const mockPasswordService = {
@@ -110,6 +111,10 @@ describe('AuthService', () => {
         refreshToken: 'hashedRefreshToken',
       };
 
+      mockJwtService.verifyAsync.mockResolvedValue({
+        sub: userId,
+        email: user.email,
+      });
       mockUsersService.findOneById.mockResolvedValue(user);
       mockPasswordService.comparePassword.mockResolvedValue(true);
 
@@ -117,16 +122,33 @@ describe('AuthService', () => {
       mockJwtService.signAsync.mockResolvedValue('token');
       mockPasswordService.hashPassword.mockResolvedValue('hashed');
 
-      const result = await service.refreshTokens(userId, refreshToken);
+      const result = await service.refreshTokens(refreshToken);
 
       expect(result).toHaveProperty('access_token');
       expect(result).toHaveProperty('refresh_token');
+      expect(mockJwtService.verifyAsync).toHaveBeenCalledWith(refreshToken);
+      expect(mockUsersService.findOneById).toHaveBeenCalledWith(userId);
       expect(mockPasswordService.comparePassword).toHaveBeenCalled();
     });
 
+    it('should throw UnauthorizedException if refresh token jwt is invalid', async () => {
+      mockJwtService.verifyAsync.mockRejectedValue(new Error('jwt expired'));
+
+      await expect(service.refreshTokens('expired-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(mockUsersService.findOneById).not.toHaveBeenCalled();
+      expect(mockPasswordService.comparePassword).not.toHaveBeenCalled();
+    });
+
     it('should throw UnauthorizedException if user not found', async () => {
+      mockJwtService.verifyAsync.mockResolvedValue({
+        sub: 1,
+        email: 'test@example.com',
+      });
       mockUsersService.findOneById.mockResolvedValue(null);
-      await expect(service.refreshTokens(1, 'token')).rejects.toThrow(
+      await expect(service.refreshTokens('token')).rejects.toThrow(
         UnauthorizedException,
       );
     });

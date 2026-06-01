@@ -8,6 +8,11 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { PasswordService } from './password.service';
 
+interface JwtPayload {
+  sub: number;
+  email: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -103,12 +108,19 @@ export class AuthService {
 
   /**
    * 리프레시 토큰을 검증하고 새로운 액세스 토큰을 발급합니다.
-   * @param userId 사용자 ID
    * @param refreshToken 클라이언트로부터 받은 리프레시 토큰
    * @returns 새로운 access_token과 refresh_token
    */
-  async refreshTokens(userId: number, refreshToken: string) {
-    const user = await this.usersService.findOneById(userId);
+  async refreshTokens(refreshToken: string) {
+    let payload: JwtPayload;
+
+    try {
+      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
+    } catch {
+      throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
+    }
+
+    const user = await this.usersService.findOneById(payload.sub);
     if (!user || !user.refreshToken) {
       throw new UnauthorizedException('접근이 거부되었습니다.');
     }

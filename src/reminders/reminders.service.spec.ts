@@ -93,6 +93,18 @@ describe('RemindersService', () => {
         data: expect.objectContaining(updateDto),
       });
     });
+
+    it('리마인더 알림 발송 여부를 수정해야 함', async () => {
+      const updateDto = { notified: true };
+      mockPrismaService.reminder.update.mockResolvedValue({ id: 1, ...updateDto });
+
+      await service.update(1, 1, updateDto);
+
+      expect(mockPrismaService.reminder.update).toHaveBeenCalledWith({
+        where: { id: 1, deletedAt: null, section: { userId: 1 } },
+        data: expect.objectContaining(updateDto),
+      });
+    });
   });
 
   describe('remove', () => {

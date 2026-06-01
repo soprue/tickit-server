@@ -7,4 +7,9 @@ export class UpdateReminderDto extends PartialType(CreateReminderDto) {
   @IsOptional()
   @IsBoolean()
   done?: boolean;
+
+  @ApiProperty({ description: '알림 발송 여부', required: false })
+  @IsOptional()
+  @IsBoolean()
+  notified?: boolean;
 }

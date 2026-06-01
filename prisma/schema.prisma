@@ -48,5 +48,5 @@ model Reminder {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@index([sectionId, deletedAt, done, isAllDay, time])
+  @@index([sectionId, deletedAt, done, isAllDay(sort: Desc), time, id])
 }

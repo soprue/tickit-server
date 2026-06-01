@@ -70,6 +70,7 @@ export class RemindersService {
         { done: 'asc' }, // 미완료(false)가 위로, 완료(true)가 아래로
         { isAllDay: 'desc' }, // 하루종일(true)이 위로
         { time: 'asc' }, // 시간 오름차순 (오전 1시 -> 오전 2시)
+        { id: 'asc' }, // 동일한 정렬 값에서 커서 페이지네이션을 안정화
       ],
     });
   }

@@ -5,6 +5,7 @@ import { SectionsService } from '../sections/sections.service';
 import { ReminderNotFoundException } from '../common/exceptions/reminder-not-found.exception';
 import { UnauthorizedSectionException } from '../common/exceptions/unauthorized-section.exception';
 import { SectionNotFoundException } from '../common/exceptions/section-not-found.exception';
+import { EVERYDAY_SECTION_TITLE } from '../common/constants/sections.constants';
 
 describe('RemindersService', () => {
   let service: RemindersService;
@@ -127,7 +128,7 @@ describe('RemindersService', () => {
           deletedAt: null,
           section: {
             userId: 1,
-            title: 'Everyday',
+            title: EVERYDAY_SECTION_TITLE,
             isFixed: true,
             deletedAt: null,
           },

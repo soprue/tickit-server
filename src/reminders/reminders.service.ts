@@ -6,8 +6,8 @@ import { SectionsService } from '../sections/sections.service';
 import { ReminderNotFoundException } from '../common/exceptions/reminder-not-found.exception';
 import { UnauthorizedSectionException } from '../common/exceptions/unauthorized-section.exception';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
+import { EVERYDAY_SECTION_TITLE } from '../common/constants/sections.constants';
 
-const EVERYDAY_SECTION_TITLE = 'Everyday';
 const DAILY_RESET_TIME_ZONE = 'Asia/Seoul';
 
 @Injectable()

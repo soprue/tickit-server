@@ -13,7 +13,7 @@ export class UsersService {
    * @returns 생성된 사용자 객체
    */
   async create(data: Prisma.UserCreateInput): Promise<User> {
-    return await this.prisma.user.create({
+    return this.prisma.user.create({
       data,
     });
   }
@@ -25,7 +25,7 @@ export class UsersService {
    * @returns 생성된 사용자 객체
    */
   async createWithDefaultSections(data: Prisma.UserCreateInput): Promise<User> {
-    return await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       // 1. 유저 생성
       const user = await tx.user.create({ data });
 
@@ -47,7 +47,7 @@ export class UsersService {
    * @returns 찾은 사용자 객체 또는 null
    */
   async findOneByEmail(email: string): Promise<User | null> {
-    return await this.prisma.user.findUnique({
+    return this.prisma.user.findUnique({
       where: { email },
     });
   }
@@ -58,7 +58,7 @@ export class UsersService {
    * @returns 사용자 객체 또는 null
    */
   async findOneById(id: number): Promise<User | null> {
-    return await this.prisma.user.findUnique({
+    return this.prisma.user.findUnique({
       where: { id },
     });
   }
@@ -85,7 +85,7 @@ export class UsersService {
     socialId?: string;
     provider: string;
   }): Promise<User> {
-    return await this.prisma.user.upsert({
+    return this.prisma.user.upsert({
       where: { email: data.email },
       update: {
         socialId: data.socialId,

@@ -46,7 +46,7 @@ export class AuthService {
       hashedPassword = await this.passwordService.hashPassword(password);
     }
 
-    return await this.usersService.createWithDefaultSections({
+    return this.usersService.createWithDefaultSections({
       email,
       password: hashedPassword,
       socialId,
@@ -156,7 +156,7 @@ export class AuthService {
     socialId: string;
     provider: string;
   }) {
-    return await this.usersService.upsertByEmail({
+    return this.usersService.upsertByEmail({
       email: profile.email,
       socialId: profile.socialId,
       provider: profile.provider,

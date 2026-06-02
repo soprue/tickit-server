@@ -53,7 +53,7 @@ export class RemindersService {
 
     await this.resetEverydayReminders(userId);
 
-    return await this.prisma.reminder.findMany({
+    return this.prisma.reminder.findMany({
       take,
       skip: cursor ? 1 : 0, // cursor가 있으면 해당 cursor 다음부터 가져옴
       cursor: cursor ? { id: cursor } : undefined,

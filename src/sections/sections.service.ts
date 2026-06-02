@@ -13,7 +13,7 @@ export class SectionsService {
    * 새로운 섹션을 생성합니다.
    */
   async create(userId: number, createSectionDto: CreateSectionDto) {
-    return await this.prisma.section.create({
+    return this.prisma.section.create({
       data: {
         ...createSectionDto,
         userId,
@@ -25,8 +25,8 @@ export class SectionsService {
    * 해당 사용자의 삭제되지 않은 모든 섹션을 조회합니다.
    */
   async findAll(userId: number) {
-    return await this.prisma.section.findMany({
-      where: { 
+    return this.prisma.section.findMany({
+      where: {
         userId,
         deletedAt: null // Soft delete 필터링
       },
@@ -61,7 +61,7 @@ export class SectionsService {
 
     this.validateIfFixed(section.isFixed, '수정');
 
-    return await this.prisma.section.update({
+    return this.prisma.section.update({
       where: { id },
       data: updateSectionDto,
     });
@@ -77,7 +77,7 @@ export class SectionsService {
 
     const deletedAt = new Date();
 
-    return await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const deletedSection = await tx.section.update({
         where: { id },
         data: { deletedAt },

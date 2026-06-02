@@ -75,7 +75,7 @@ export class AuthController {
     },
   })
   async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
-    return await this.authService.refreshTokens(refreshTokenDto.refresh_token);
+    return this.authService.refreshTokens(refreshTokenDto.refresh_token);
   }
 
   @Get('google')

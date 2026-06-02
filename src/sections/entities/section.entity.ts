@@ -1,9 +1,8 @@
-import { Exclude, Type } from 'class-transformer';
-import { Section } from '@prisma/client';
-import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 import { ReminderEntity } from '../../reminders/entities/reminder.entity';
 
-export class SectionEntity implements Section {
+export class SectionEntity {
   @ApiProperty({ example: 'uuid-string', description: '섹션 고유 ID' })
   id: string;
 
@@ -13,19 +12,11 @@ export class SectionEntity implements Section {
   @ApiProperty({ example: true, description: '고정 섹션 여부' })
   isFixed: boolean;
 
-  @Exclude()
-  @ApiHideProperty()
-  userId: number;
-
   @ApiProperty({ description: '생성일' })
   createdAt: Date;
 
   @ApiProperty({ description: '수정일' })
   updatedAt: Date;
-
-  @Exclude()
-  @ApiHideProperty()
-  deletedAt: Date | null;
 
   @ApiProperty({ type: () => [ReminderEntity], required: false })
   @Type(() => ReminderEntity)

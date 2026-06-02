@@ -113,6 +113,8 @@ export class RemindersService {
     }
 
     try {
+      const { time, ...reminderData } = updateReminderDto;
+
       // 2. update 시 where 절에 소유권 조건을 포함하여 최적화
       return await this.prisma.reminder.update({
         where: {
@@ -123,10 +125,8 @@ export class RemindersService {
           },
         },
         data: {
-          ...updateReminderDto,
-          time: updateReminderDto.time
-            ? new Date(updateReminderDto.time)
-            : undefined,
+          ...reminderData,
+          time: time === undefined ? undefined : time && new Date(time),
         },
       });
     } catch {

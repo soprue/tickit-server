@@ -1,8 +1,19 @@
-import { PartialType, ApiProperty } from '@nestjs/swagger';
+import { PartialType, ApiProperty, OmitType } from '@nestjs/swagger';
 import { CreateReminderDto } from './create-reminder.dto';
-import { IsOptional, IsBoolean } from 'class-validator';
+import { IsOptional, IsBoolean, IsDateString } from 'class-validator';
 
-export class UpdateReminderDto extends PartialType(CreateReminderDto) {
+export class UpdateReminderDto extends PartialType(
+  OmitType(CreateReminderDto, ['time'] as const),
+) {
+  @ApiProperty({
+    description: '알림 시간. null을 보내면 알림 시간이 제거됩니다.',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsDateString()
+  time?: string | null;
+
   @ApiProperty({ description: '완료 여부', required: false })
   @IsOptional()
   @IsBoolean()

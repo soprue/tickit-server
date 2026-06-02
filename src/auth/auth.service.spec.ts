@@ -4,6 +4,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { PasswordService } from './password.service';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 const mockUsersService = {
   findOneByEmail: jest.fn(),
@@ -72,6 +73,42 @@ describe('AuthService', () => {
       await expect(service.register(email, 'password')).rejects.toThrow(
         ConflictException,
       );
+    });
+
+    it('should throw ConflictException if email is created concurrently', async () => {
+      const email = 'test@example.com';
+      const password = 'password123';
+      const hashedPassword = 'hashedPassword';
+      const uniqueEmailError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`email`)',
+        {
+          code: 'P2002',
+          clientVersion: 'test',
+          meta: { target: ['email'] },
+        },
+      );
+
+      mockUsersService.findOneByEmail.mockResolvedValue(null);
+      mockPasswordService.hashPassword.mockResolvedValue(hashedPassword);
+      mockUsersService.createWithDefaultSections.mockRejectedValue(
+        uniqueEmailError,
+      );
+
+      await expect(service.register(email, password)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('should rethrow non-email create errors during register', async () => {
+      const email = 'test@example.com';
+      const password = 'password123';
+      const error = new Error('database unavailable');
+
+      mockUsersService.findOneByEmail.mockResolvedValue(null);
+      mockPasswordService.hashPassword.mockResolvedValue('hashedPassword');
+      mockUsersService.createWithDefaultSections.mockRejectedValue(error);
+
+      await expect(service.register(email, password)).rejects.toThrow(error);
     });
   });
 

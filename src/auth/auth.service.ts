@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PasswordService } from './password.service';
 
 interface JwtPayload {
@@ -46,12 +46,20 @@ export class AuthService {
       hashedPassword = await this.passwordService.hashPassword(password);
     }
 
-    return this.usersService.createWithDefaultSections({
-      email,
-      password: hashedPassword,
-      socialId,
-      provider,
-    });
+    try {
+      return await this.usersService.createWithDefaultSections({
+        email,
+        password: hashedPassword,
+        socialId,
+        provider,
+      });
+    } catch (error) {
+      if (this.isUniqueEmailConflict(error)) {
+        throw new ConflictException('이미 존재하는 이메일입니다.');
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -161,5 +169,14 @@ export class AuthService {
       socialId: profile.socialId,
       provider: profile.provider,
     });
+  }
+
+  private isUniqueEmailConflict(error: unknown) {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002' &&
+      Array.isArray(error.meta?.target) &&
+      error.meta.target.includes('email')
+    );
   }
 }

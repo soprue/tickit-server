@@ -18,6 +18,7 @@ export class CreateReminderDto {
     description: '알림 시간',
     example: '2026-05-15T10:00:00Z',
     required: false,
+    nullable: true,
   })
   @IsOptional()
   @IsDateString()

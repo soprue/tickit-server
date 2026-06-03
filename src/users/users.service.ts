@@ -8,7 +8,7 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * 새로운 사용자를 데이터베이스에 직접 생성합니다.
+   * 전달받은 사용자 데이터를 그대로 생성합니다.
    * @param data 사용자 생성 데이터
    * @returns 생성된 사용자 객체
    */
@@ -19,17 +19,14 @@ export class UsersService {
   }
 
   /**
-   * 새로운 사용자를 생성하고 기본 섹션(Everyday, To Do)을 함께 생성합니다.
-   * 명시적 트랜잭션을 사용하여 데이터 일관성을 보장합니다.
+   * 사용자를 생성하고 기본 섹션을 같은 트랜잭션에서 생성합니다.
    * @param data 사용자 생성 데이터
    * @returns 생성된 사용자 객체
    */
   async createWithDefaultSections(data: Prisma.UserCreateInput): Promise<User> {
     return this.prisma.$transaction(async (tx) => {
-      // 1. 유저 생성
       const user = await tx.user.create({ data });
 
-      // 2. 기본 섹션 생성
       await tx.section.createMany({
         data: DEFAULT_SECTIONS.map((section) => ({
           ...section,
@@ -42,7 +39,7 @@ export class UsersService {
   }
 
   /**
-   * 이메일을 통해 사용자를 검색합니다.
+   * 이메일로 사용자를 조회합니다.
    * @param email 검색할 이메일
    * @returns 찾은 사용자 객체 또는 null
    */
@@ -53,7 +50,7 @@ export class UsersService {
   }
 
   /**
-   * ID를 통해 사용자를 검색합니다.
+   * ID로 사용자를 조회합니다.
    * @param id 사용자 ID
    * @returns 사용자 객체 또는 null
    */
@@ -64,7 +61,7 @@ export class UsersService {
   }
 
   /**
-   * 사용자의 리프레시 토큰을 업데이트합니다.
+   * 저장된 리프레시 토큰 해시를 갱신하거나 제거합니다.
    * @param id 사용자 ID
    * @param refreshToken 새로운 리프레시 토큰 (로그아웃 시 null)
    */
@@ -76,7 +73,7 @@ export class UsersService {
   }
 
   /**
-   * 이메일로 사용자를 찾고 정보가 있으면 업데이트, 없으면 기본 섹션과 함께 생성합니다.
+   * 이메일 기준으로 OAuth 사용자를 갱신하거나 기본 섹션과 함께 생성합니다.
    * @param data 사용자 정보 (이메일, 소셜 ID, 가입 경로)
    * @returns 사용자 객체
    */

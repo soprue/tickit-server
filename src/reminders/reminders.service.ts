@@ -17,8 +17,7 @@ export class RemindersService {
   ) {}
 
   /**
-   * 새로운 리마인더를 생성합니다.
-   * 최적화: 섹션 소유권 확인과 생성을 한 번의 쿼리로 처리합니다.
+   * 현재 사용자가 소유한 섹션에 새 리마인더를 생성합니다.
    */
   async create(userId: number, createReminderDto: CreateReminderDto) {
     try {
@@ -32,20 +31,19 @@ export class RemindersService {
           section: {
             connect: {
               id: createReminderDto.sectionId,
-              userId: userId, // 섹션의 userId가 현재 유저와 일치해야만 성공
+              userId: userId,
               deletedAt: null,
             },
           },
         },
       });
     } catch {
-      // connect 조건이 맞지 않으면(섹션이 없거나 주인이 아니면) 에러 발생
       throw new UnauthorizedSectionException();
     }
   }
 
   /**
-   * 사용자의 삭제되지 않은 모든 리마인더를 조회합니다. (Cursor Pagination 적용)
+   * 삭제되지 않은 리마인더를 커서 기반으로 조회합니다.
    */
   async findAll(userId: number, query: PaginationQueryDto) {
     const { take, cursor, sectionId } = query;
@@ -54,7 +52,7 @@ export class RemindersService {
 
     return this.prisma.reminder.findMany({
       take,
-      skip: cursor ? 1 : 0, // cursor가 있으면 해당 cursor 다음부터 가져옴
+      skip: cursor ? 1 : 0,
       cursor: cursor ? { id: cursor } : undefined,
       where: {
         deletedAt: null,
@@ -65,16 +63,16 @@ export class RemindersService {
         },
       },
       orderBy: [
-        { done: 'asc' }, // 미완료(false)가 위로, 완료(true)가 아래로
-        { isAllDay: 'desc' }, // 하루종일(true)이 위로
-        { time: 'asc' }, // 시간 오름차순 (오전 1시 -> 오전 2시)
-        { id: 'asc' }, // 동일한 정렬 값에서 커서 페이지네이션을 안정화
+        { done: 'asc' },
+        { isAllDay: 'desc' },
+        { time: 'asc' },
+        { id: 'asc' },
       ],
     });
   }
 
   /**
-   * 리마인더 상세 조회 (삭제된 항목 제외)
+   * 삭제되지 않았고 현재 사용자가 접근할 수 있는 리마인더를 조회합니다.
    */
   async findOne(userId: number, id: number) {
     await this.everydayReminderResetService.resetIfNeeded(userId);
@@ -99,14 +97,13 @@ export class RemindersService {
 
   /**
    * 리마인더 정보를 수정합니다.
-   * 최적화: 한 번의 update 쿼리로 소유권 확인과 수정을 동시에 시도합니다.
+   * time이 undefined이면 유지하고, null이면 알림 시간을 제거합니다.
    */
   async update(
     userId: number,
     id: number,
     updateReminderDto: UpdateReminderDto,
   ) {
-    // 1. 섹션 이동이 포함된 경우, 이동할 섹션에 대한 권한 먼저 확인 (이건 별도 조회가 필요)
     if (updateReminderDto.sectionId) {
       await this.sectionsService.findOne(userId, updateReminderDto.sectionId);
     }
@@ -114,7 +111,6 @@ export class RemindersService {
     try {
       const { time, ...reminderData } = updateReminderDto;
 
-      // 2. update 시 where 절에 소유권 조건을 포함하여 최적화
       return await this.prisma.reminder.update({
         where: {
           id: id,
@@ -134,8 +130,7 @@ export class RemindersService {
   }
 
   /**
-   * 리마인더를 소프트 삭제합니다.
-   * 최적화: where 절에 소유권 조건을 넣어 한 번에 처리합니다.
+   * 리마인더를 실제 삭제하지 않고 deletedAt을 설정해 숨깁니다.
    */
   async remove(userId: number, id: number) {
     try {

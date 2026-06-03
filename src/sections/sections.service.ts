@@ -28,21 +28,21 @@ export class SectionsService {
     return this.prisma.section.findMany({
       where: {
         userId,
-        deletedAt: null // Soft delete 필터링
+        deletedAt: null,
       },
       orderBy: { createdAt: 'asc' },
     });
   }
 
   /**
-   * 특정 섹션을 상세 조회합니다. (삭제된 섹션 제외)
+   * 삭제되지 않았고 현재 사용자가 소유한 섹션을 조회합니다.
    */
   async findOne(userId: number, id: string) {
     const section = await this.prisma.section.findFirst({
-      where: { 
+      where: {
         id,
         userId,
-        deletedAt: null 
+        deletedAt: null,
       },
     });
 
@@ -54,7 +54,7 @@ export class SectionsService {
   }
 
   /**
-   * 섹션 이름을 변경합니다. (고정 섹션 제외)
+   * 고정 섹션이 아닌 섹션의 제목을 변경합니다.
    */
   async update(userId: number, id: string, updateSectionDto: UpdateSectionDto) {
     const section = await this.findOne(userId, id);
@@ -68,7 +68,7 @@ export class SectionsService {
   }
 
   /**
-   * 섹션을 소프트 삭제합니다. (고정 섹션 제외)
+   * 고정 섹션이 아닌 섹션과 하위 리마인더를 함께 소프트 삭제합니다.
    */
   async remove(userId: number, id: string) {
     const section = await this.findOne(userId, id);

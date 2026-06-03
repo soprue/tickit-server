@@ -57,7 +57,7 @@ describe('RemindersService', () => {
   });
 
   describe('create', () => {
-    it('권한이 있는 섹션에 리마인더를 생성해야 함 (쿼리 최적화 버전)', async () => {
+    it('권한이 있는 섹션에 리마인더를 생성해야 함', async () => {
       const dto = { text: 'Test', sectionId: 'uuid' };
       mockPrismaService.reminder.create.mockResolvedValue({ id: 1, ...dto });
 
@@ -181,7 +181,7 @@ describe('RemindersService', () => {
   });
 
   describe('remove', () => {
-    it('리마인더를 소프트 삭제해야 함 (최적화 버전)', async () => {
+    it('리마인더를 소프트 삭제해야 함', async () => {
       mockPrismaService.reminder.update.mockResolvedValue({
         id: 1,
         deletedAt: new Date(),

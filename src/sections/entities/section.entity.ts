@@ -18,7 +18,11 @@ export class SectionEntity {
   @ApiProperty({ description: '수정일' })
   updatedAt: Date;
 
-  @ApiProperty({ type: () => [ReminderEntity], required: false })
+  @ApiProperty({
+    type: () => [ReminderEntity],
+    required: false,
+    description: '섹션에 포함된 리마인더 목록. 포함 조회 시에만 제공됩니다.',
+  })
   @Type(() => ReminderEntity)
   reminders?: ReminderEntity[];
 

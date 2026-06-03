@@ -6,7 +6,9 @@ export class UpdateReminderDto extends PartialType(
   OmitType(CreateReminderDto, ['time'] as const),
 ) {
   @ApiProperty({
-    description: '알림 시간. null을 보내면 알림 시간이 제거됩니다.',
+    description:
+      '알림 시간. 생략하면 기존 값을 유지하고, null을 보내면 알림 시간이 제거됩니다.',
+    example: '2026-05-15T10:00:00Z',
     required: false,
     nullable: true,
   })

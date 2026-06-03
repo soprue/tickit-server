@@ -18,7 +18,7 @@ export class RegisterDto {
 
   @ApiProperty({
     example: 'Password123!',
-    description: '비밀번호 (영문, 숫자, 특수문자 포함 최소 8자)',
+    description: '영문, 숫자, 특수문자를 각각 하나 이상 포함하는 8자 이상의 비밀번호',
   })
   @IsString()
   @MinLength(8, { message: '비밀번호는 최소 8자 이상이어야 합니다.' })

@@ -25,7 +25,7 @@ export class ReminderEntity {
 
   @ApiProperty({
     example: '2026-06-01',
-    description: 'Everyday 리마인더가 마지막으로 일일 리셋된 날짜',
+    description: 'Everyday 섹션 리마인더가 마지막으로 일일 리셋된 날짜',
     nullable: true,
   })
   lastResetDate: string | null;

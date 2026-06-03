@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { SectionsModule } from './sections/sections.module';
 import { RemindersModule } from './reminders/reminders.module';
+import { SyncModule } from './sync/sync.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { RemindersModule } from './reminders/reminders.module';
     UsersModule,
     SectionsModule,
     RemindersModule,
+    SyncModule,
   ],
   controllers: [AppController],
   providers: [

@@ -6,15 +6,14 @@ import { SectionsService } from '../sections/sections.service';
 import { ReminderNotFoundException } from '../common/exceptions/reminder-not-found.exception';
 import { UnauthorizedSectionException } from '../common/exceptions/unauthorized-section.exception';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
-import { EVERYDAY_SECTION_TITLE } from '../common/constants/sections.constants';
-
-const DAILY_RESET_TIME_ZONE = 'Asia/Seoul';
+import { EverydayReminderResetService } from './services/everyday-reminder-reset.service';
 
 @Injectable()
 export class RemindersService {
   constructor(
     private prisma: PrismaService,
     private sectionsService: SectionsService,
+    private everydayReminderResetService: EverydayReminderResetService,
   ) {}
 
   /**
@@ -51,7 +50,7 @@ export class RemindersService {
   async findAll(userId: number, query: PaginationQueryDto) {
     const { take, cursor, sectionId } = query;
 
-    await this.resetEverydayReminders(userId);
+    await this.everydayReminderResetService.resetIfNeeded(userId);
 
     return this.prisma.reminder.findMany({
       take,
@@ -78,7 +77,7 @@ export class RemindersService {
    * 리마인더 상세 조회 (삭제된 항목 제외)
    */
   async findOne(userId: number, id: number) {
-    await this.resetEverydayReminders(userId);
+    await this.everydayReminderResetService.resetIfNeeded(userId);
 
     const reminder = await this.prisma.reminder.findFirst({
       where: {
@@ -155,64 +154,4 @@ export class RemindersService {
     }
   }
 
-  private async resetEverydayReminders(userId: number) {
-    const today = this.getTodayResetDate();
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { everydayLastResetDate: true },
-    });
-
-    if (!user || user.everydayLastResetDate === today) {
-      return;
-    }
-
-    await this.prisma.$transaction(async (tx) => {
-      const updatedUser = await tx.user.updateMany({
-        where: {
-          id: userId,
-          OR: [
-            { everydayLastResetDate: null },
-            { everydayLastResetDate: { not: today } },
-          ],
-        },
-        data: { everydayLastResetDate: today },
-      });
-
-      if (updatedUser.count === 0) {
-        return;
-      }
-
-      await tx.reminder.updateMany({
-        where: {
-          deletedAt: null,
-          section: {
-            userId,
-            title: EVERYDAY_SECTION_TITLE,
-            isFixed: true,
-            deletedAt: null,
-          },
-        },
-        data: {
-          done: false,
-          notified: false,
-          lastResetDate: today,
-        },
-      });
-    });
-  }
-
-  private getTodayResetDate(date = new Date()) {
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: DAILY_RESET_TIME_ZONE,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).formatToParts(date);
-
-    const values = Object.fromEntries(
-      parts.map((part) => [part.type, part.value]),
-    );
-
-    return `${values.year}-${values.month}-${values.day}`;
-  }
 }

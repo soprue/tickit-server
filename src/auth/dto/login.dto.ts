@@ -12,7 +12,7 @@ export class LoginDto {
 
   @ApiProperty({
     example: 'Password123!',
-    description: '비밀번호',
+    description: '사용자 비밀번호',
   })
   @IsString()
   @IsNotEmpty({ message: '비밀번호는 필수 입력 항목입니다.' })

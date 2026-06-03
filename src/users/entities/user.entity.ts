@@ -1,21 +1,11 @@
-import { Exclude } from 'class-transformer';
-import { User } from '@prisma/client';
-import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class UserEntity implements User {
+export class UserEntity {
   @ApiProperty({ example: 1, description: '사용자 고유 ID' })
   id: number;
 
   @ApiProperty({ example: 'user@example.com', description: '사용자 이메일' })
   email: string;
-
-  @Exclude()
-  @ApiHideProperty()
-  password: string | null;
-
-  @Exclude()
-  @ApiHideProperty()
-  refreshToken: string | null;
 
   @ApiProperty({
     example: 'local',

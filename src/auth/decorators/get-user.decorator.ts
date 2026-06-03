@@ -1,4 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { Request } from 'express';
+import { User } from '@prisma/client';
 
 /**
  * 현재 인증된 사용자 정보를 요청 객체에서 추출하는 커스텀 데코레이터입니다.
@@ -7,8 +9,8 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  * @returns 사용자 객체 전체 또는 특정 속성
  */
 export const GetUser = createParamDecorator(
-  (data: string | undefined, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
+  (data: keyof User | undefined, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest<Request & { user: User }>();
     const user = request.user;
 
     return data ? user?.[data] : user;

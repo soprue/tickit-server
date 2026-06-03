@@ -17,7 +17,7 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: '현재 로그인한 사용자 프로필 조회',
-    description: 'JWT 토큰을 사용하여 현재 인증된 사용자의 정보를 가져옵니다.',
+    description: 'Bearer 액세스 토큰으로 인증된 현재 사용자의 정보를 조회합니다.',
   })
   @ApiResponse({
     status: 200,
@@ -25,7 +25,7 @@ export class UsersController {
     type: UserEntity,
   })
   @ApiResponse({ status: 401, description: '인증되지 않은 요청' })
-  getProfile(@GetUser() user: any) {
+  getProfile(@GetUser() user: UserEntity) {
     return new UserEntity(user);
   }
 }

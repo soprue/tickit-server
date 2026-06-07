@@ -5,24 +5,25 @@
 ---
 
 ## 🧱 Step 1: 데이터베이스 인프라 및 Prisma 설정
-- [ ] Prisma 및 관련 의존성 패키지 설치 (`@prisma/client`, `prisma`)
-- [ ] `npx prisma init`으로 초기 환경 구성
-- [ ] `User` 및 `Reminder` 기본 모델 설계 (`schema.prisma`)
-- [ ] PostgreSQL DB 연결 환경 변수 설정 (`.env`)
-- [ ] Prisma Service 및 Module 생성 (Global Module 권장)
+- [x] Prisma 및 관련 의존성 패키지 설치 (`@prisma/client`, `prisma`)
+- [x] `npx prisma init`으로 초기 환경 구성
+- [x] `User` 및 `Reminder` 기본 모델 설계 (`schema.prisma`)
+- [x] PostgreSQL DB 연결 환경 변수 설정 (`.env`)
+- [x] Prisma Service 및 Module 생성 (Global Module 권장)
 
 ## 🔐 Step 2: 인증 시스템 구현 (Auth)
-- [ ] Passport.js 및 JWT 관련 패키지 설치
-- [ ] `AuthModule`, `AuthService` 생성
-- [ ] `User` 회원가입 및 로그인 로직 구현 (bcrypt 암호화 포함)
-- [ ] JWT 발급 및 검증 Strategy 구현
-- [ ] API 보호를 위한 `JwtAuthGuard` 작성
+- [x] Passport.js 및 JWT 관련 패키지 설치
+- [x] `AuthModule`, `AuthService` 생성
+- [x] `User` 회원가입 및 로그인 로직 구현 (bcrypt 암호화 포함)
+- [x] JWT 발급 및 검증 Strategy 구현
+- [x] API 보호를 위한 `JwtAuthGuard` 작성
+- [x] Swagger API 문서화 및 CORS 설정 추가
 
 ## 📋 Step 3: 리마인더 CRUD API 개발
-- [ ] `RemindersModule` 리소스 생성 (Controller, Service, DTO)
-- [ ] `User` - `Reminder` 1:N 관계 매핑 및 저장 로직 구현
-- [ ] 리마인더 목록 조회, 생성, 수정, 삭제 API 구현
-- [ ] `class-validator`를 이용한 요청 데이터 검증 (DTO)
+- [x] `RemindersModule` 리소스 생성 (Controller, Service, DTO)
+- [x] `User` - `Reminder` 1:N 관계 매핑 및 저장 로직 구현
+- [x] 리마인더 목록 조회, 생성, 수정, 삭제 API 구현
+- [x] `class-validator`를 이용한 요청 데이터 검증 (DTO)
 
 ## 🔄 Step 4: 데이터 동기화 전략 구현
 - [ ] 리마인더 모델에 `updatedAt`, `deletedAt` (Soft Delete) 필드 추가

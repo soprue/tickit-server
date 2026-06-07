@@ -1,0 +1,106 @@
+import { Injectable } from '@nestjs/common';
+import { CreateSectionDto } from './dto/create-section.dto';
+import { UpdateSectionDto } from './dto/update-section.dto';
+import { PrismaService } from '../prisma/prisma.service';
+import { SectionNotFoundException } from '../common/exceptions/section-not-found.exception';
+import { FixedSectionException } from '../common/exceptions/fixed-section.exception';
+
+@Injectable()
+export class SectionsService {
+  constructor(private prisma: PrismaService) {}
+
+  /**
+   * 새로운 섹션을 생성합니다.
+   */
+  async create(userId: number, createSectionDto: CreateSectionDto) {
+    return this.prisma.section.create({
+      data: {
+        ...createSectionDto,
+        userId,
+      },
+    });
+  }
+
+  /**
+   * 해당 사용자의 삭제되지 않은 모든 섹션을 조회합니다.
+   */
+  async findAll(userId: number) {
+    return this.prisma.section.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  /**
+   * 삭제되지 않았고 현재 사용자가 소유한 섹션을 조회합니다.
+   */
+  async findOne(userId: number, id: string) {
+    const section = await this.prisma.section.findFirst({
+      where: {
+        id,
+        userId,
+        deletedAt: null,
+      },
+    });
+
+    if (!section) {
+      throw new SectionNotFoundException();
+    }
+
+    return section;
+  }
+
+  /**
+   * 고정 섹션이 아닌 섹션의 제목을 변경합니다.
+   */
+  async update(userId: number, id: string, updateSectionDto: UpdateSectionDto) {
+    const section = await this.findOne(userId, id);
+
+    this.validateIfFixed(section.isFixed, '수정');
+
+    return this.prisma.section.update({
+      where: { id },
+      data: updateSectionDto,
+    });
+  }
+
+  /**
+   * 고정 섹션이 아닌 섹션과 하위 리마인더를 함께 소프트 삭제합니다.
+   */
+  async remove(userId: number, id: string) {
+    const section = await this.findOne(userId, id);
+
+    this.validateIfFixed(section.isFixed, '삭제');
+
+    const deletedAt = new Date();
+
+    return this.prisma.$transaction(async (tx) => {
+      const deletedSection = await tx.section.update({
+        where: { id },
+        data: { deletedAt },
+      });
+
+      await tx.reminder.updateMany({
+        where: {
+          sectionId: id,
+          deletedAt: null,
+        },
+        data: { deletedAt },
+      });
+
+      return deletedSection;
+    });
+  }
+
+  /**
+   * 고정 섹션 여부를 확인하여 예외를 발생시킵니다.
+   */
+  private validateIfFixed(isFixed: boolean, action: '수정' | '삭제') {
+    if (isFixed) {
+      throw new FixedSectionException(action);
+    }
+  }
+}

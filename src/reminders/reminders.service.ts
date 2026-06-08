@@ -110,6 +110,34 @@ export class RemindersService {
 
     try {
       const { time, ...reminderData } = updateReminderDto;
+      const nextTime = time === undefined ? undefined : time && new Date(time);
+      const shouldCheckTimeChange =
+        time !== undefined && updateReminderDto.notified === undefined;
+      let shouldResetNotified = false;
+
+      if (shouldCheckTimeChange) {
+        const existingReminder = await this.prisma.reminder.findFirst({
+          where: {
+            id,
+            deletedAt: null,
+            section: {
+              userId,
+              deletedAt: null,
+            },
+          },
+          select: {
+            time: true,
+          },
+        });
+
+        if (!existingReminder) {
+          throw new ReminderNotFoundException();
+        }
+
+        shouldResetNotified =
+          this.getTimeValue(existingReminder.time) !==
+          this.getTimeValue(nextTime || null);
+      }
 
       return await this.prisma.reminder.update({
         where: {
@@ -121,7 +149,8 @@ export class RemindersService {
         },
         data: {
           ...reminderData,
-          time: time === undefined ? undefined : time && new Date(time),
+          time: nextTime,
+          ...(shouldResetNotified ? { notified: false } : {}),
         },
       });
     } catch {
@@ -149,4 +178,7 @@ export class RemindersService {
     }
   }
 
+  private getTimeValue(time: Date | null) {
+    return time ? time.getTime() : null;
+  }
 }

@@ -145,11 +145,45 @@ describe('RemindersService', () => {
       });
     });
 
-    it('리마인더 알림 시간을 수정해야 함', async () => {
+    it('리마인더 알림 시간이 변경되면 알림 발송 여부를 초기화해야 함', async () => {
       const updateDto = { time: '2026-06-02T09:00:00.000Z' };
+      mockPrismaService.reminder.findFirst.mockResolvedValue({
+        time: new Date('2026-06-02T08:00:00.000Z'),
+      });
       mockPrismaService.reminder.update.mockResolvedValue({
         id: 1,
         time: new Date(updateDto.time),
+        notified: false,
+      });
+
+      await service.update(1, 1, updateDto);
+
+      expect(mockPrismaService.reminder.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: 1,
+          deletedAt: null,
+          section: { userId: 1, deletedAt: null },
+        },
+        select: { time: true },
+      });
+      expect(mockPrismaService.reminder.update).toHaveBeenCalledWith({
+        where: { id: 1, deletedAt: null, section: { userId: 1 } },
+        data: {
+          time: new Date(updateDto.time),
+          notified: false,
+        },
+      });
+    });
+
+    it('리마인더 알림 시간이 같으면 알림 발송 여부를 유지해야 함', async () => {
+      const updateDto = { time: '2026-06-02T09:00:00.000Z' };
+      mockPrismaService.reminder.findFirst.mockResolvedValue({
+        time: new Date(updateDto.time),
+      });
+      mockPrismaService.reminder.update.mockResolvedValue({
+        id: 1,
+        time: new Date(updateDto.time),
+        notified: true,
       });
 
       await service.update(1, 1, updateDto);
@@ -162,11 +196,38 @@ describe('RemindersService', () => {
       });
     });
 
+    it('알림 발송 여부를 명시하면 시간 변경보다 우선해야 함', async () => {
+      const updateDto = {
+        time: '2026-06-02T09:00:00.000Z',
+        notified: true,
+      };
+      mockPrismaService.reminder.update.mockResolvedValue({
+        id: 1,
+        time: new Date(updateDto.time),
+        notified: true,
+      });
+
+      await service.update(1, 1, updateDto);
+
+      expect(mockPrismaService.reminder.findFirst).not.toHaveBeenCalled();
+      expect(mockPrismaService.reminder.update).toHaveBeenCalledWith({
+        where: { id: 1, deletedAt: null, section: { userId: 1 } },
+        data: {
+          notified: true,
+          time: new Date(updateDto.time),
+        },
+      });
+    });
+
     it('리마인더 알림 시간을 null로 제거해야 함', async () => {
       const updateDto = { time: null };
+      mockPrismaService.reminder.findFirst.mockResolvedValue({
+        time: new Date('2026-06-02T09:00:00.000Z'),
+      });
       mockPrismaService.reminder.update.mockResolvedValue({
         id: 1,
         time: null,
+        notified: false,
       });
 
       await service.update(1, 1, updateDto);
@@ -175,6 +236,7 @@ describe('RemindersService', () => {
         where: { id: 1, deletedAt: null, section: { userId: 1 } },
         data: {
           time: null,
+          notified: false,
         },
       });
     });
